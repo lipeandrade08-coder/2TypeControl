@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState, useEffect, useRef } from "react";
 
 type View =
@@ -201,27 +202,71 @@ const menuItems = [
 
 const Icon = ({ children }: { children: string }) => <span className="icon-box" aria-hidden="true">{children}</span>;
 
+function isOrder(value: unknown): value is Order {
+  if (typeof value !== "object" || value === null) return false;
+  const order = value as Partial<Order>;
+  return (
+    typeof order.id === "number" &&
+    typeof order.customer === "string" &&
+    (order.channel === "WhatsApp" ||
+      order.channel === "Site" ||
+      order.channel === "Salão") &&
+    typeof order.detail === "string" &&
+    typeof order.total === "number" &&
+    Number.isFinite(order.total) &&
+    typeof order.time === "string" &&
+    (order.status === "Novo" ||
+      order.status === "Confirmado" ||
+      order.status === "Em preparo" ||
+      order.status === "Pronto" ||
+      order.status === "Saiu") &&
+    (order.feePending === undefined || typeof order.feePending === "boolean")
+  );
+}
+
 export function RestaurantDashboard() {
   const [activeView, setActiveView] = useState<View>("Visão geral");
   const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const feeInputRef = useRef<HTMLInputElement>(null);
+  const toastTimerRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
+    let mounted = true;
+    let controller: AbortController | undefined;
+
     const fetchOrders = async () => {
+      controller?.abort();
+      controller = new AbortController();
       try {
-        const res = await fetch('/api/orders');
-        const data = await res.json();
-        if (data.orders) {
-          // Prepend new real orders from the database to the mock ones
-          setOrders([...data.orders, ...initialOrders]);
+        const response = await fetch("/api/orders", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+
+        const data = (await response.json()) as { orders?: unknown };
+        if (mounted && Array.isArray(data.orders)) {
+          const persistedOrders = data.orders.filter(isOrder);
+          const persistedIds = new Set(persistedOrders.map((order) => order.id));
+          setOrders([
+            ...persistedOrders,
+            ...initialOrders.filter((order) => !persistedIds.has(order.id)),
+          ]);
         }
-      } catch (err) {
-        console.error("Failed to fetch orders", err);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        console.warn("Não foi possível sincronizar os pedidos.", error);
       }
     };
-    
-    fetchOrders();
-    const interval = setInterval(fetchOrders, 10000);
-    return () => clearInterval(interval);
+
+    void fetchOrders();
+    const interval = window.setInterval(fetchOrders, 15_000);
+    return () => {
+      mounted = false;
+      controller?.abort();
+      window.clearInterval(interval);
+    };
   }, []);
   const [tables, setTables] = useState<Table[]>(initialTables);
   const [selectedTable, setSelectedTable] = useState(2);
@@ -239,6 +284,54 @@ export function RestaurantDashboard() {
   const [orderFilter, setOrderFilter] = useState("Todos");
   const [search, setSearch] = useState("");
 
+  const todayLabel = useMemo(() => {
+    const formatted = new Intl.DateTimeFormat("pt-BR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      timeZone: "America/Sao_Paulo",
+    }).format(new Date());
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }, []);
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, []);
+
+  useEffect(() => {
+    if (!feeModal) return;
+    const frame = window.requestAnimationFrame(() => feeInputRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [feeModal]);
+
+  useEffect(() => {
+    if (!feeModal && !addItemModal && !checkoutModal) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setFeeModal(false);
+      setAddItemModal(false);
+      setCheckoutModal(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [feeModal, addItemModal, checkoutModal]);
+
+  useEffect(
+    () => () => {
+      if (toastTimerRef.current !== undefined) {
+        window.clearTimeout(toastTimerRef.current);
+      }
+    },
+    [],
+  );
+
   const pendingFee = orders.find((order) => order.feePending);
   const table = tables.find((item) => item.number === selectedTable) ?? tables[0];
 
@@ -252,8 +345,11 @@ export function RestaurantDashboard() {
   }, [orders, orderFilter, search]);
 
   const notify = (message: string) => {
+    if (toastTimerRef.current !== undefined) {
+      window.clearTimeout(toastTimerRef.current);
+    }
     setToast(message);
-    window.setTimeout(() => setToast(""), 2800);
+    toastTimerRef.current = window.setTimeout(() => setToast(""), 2800);
   };
 
   const applyFee = () => {
@@ -352,12 +448,12 @@ export function RestaurantDashboard() {
   return (
     <div className="app-shell">
       <aside className={`sidebar ${mobileMenu ? "sidebar-open" : ""}`}>
-        <div className="brand" onClick={() => chooseView("Visão geral")} role="button" tabIndex={0}>
-          <span className="brand-logo"><img src="/2type-logo.png" alt="" /></span>
+        <button className="brand" type="button" onClick={() => chooseView("Visão geral")}>
+          <span className="brand-logo"><Image src="/2type-logo.png" width={34} height={34} alt="" priority /></span>
           <span className="brand-copy"><strong>2Type</strong><small>CONTROL</small></span>
-        </div>
+        </button>
 
-        <button className="restaurant-switch" type="button">
+        <button className="restaurant-switch" type="button" onClick={() => notify("Seletor de unidade aberto.")}>
           <span className="restaurant-avatar">CF</span>
           <span><strong>Casa do Forno</strong><small>Unidade Centro</small></span>
           <span className="chevron">⌄</span>
@@ -371,10 +467,17 @@ export function RestaurantDashboard() {
                 type="button"
                 className={`nav-item ${activeView === item.label ? "active" : ""}`}
                 onClick={() => chooseView(item.label)}
+                aria-current={activeView === item.label ? "page" : undefined}
               >
                 <Icon>{item.icon}</Icon>
                 <span>{item.label}</span>
-                {item.badge && <span className={`nav-badge ${item.label === "WhatsApp" ? "green" : ""}`}>{item.badge}</span>}
+                {(item.label === "Pedidos" || item.badge) && (
+                  <span className={`nav-badge ${item.label === "WhatsApp" ? "green" : ""}`}>
+                    {item.label === "Pedidos"
+                      ? orders.filter((order) => order.status !== "Saiu").length
+                      : item.badge}
+                  </span>
+                )}
               </button>
             </div>
           ))}
@@ -397,20 +500,21 @@ export function RestaurantDashboard() {
 
       <main className="main-content">
         <header className="topbar">
-          <button className="mobile-menu-button" type="button" aria-label="Abrir menu" onClick={() => setMobileMenu(true)}>☰</button>
+          <button className="mobile-menu-button" type="button" aria-label="Abrir menu" aria-expanded={mobileMenu} onClick={() => setMobileMenu(true)}>☰</button>
           <div>
-            <p className="eyebrow">2TYPE CONTROL · CENTRAL DE OPERAÇÃO</p>
-            <h1>{activeView === "Visão geral" ? "Bom dia, Rafael!" : activeView}</h1>
-            <p className="topbar-subtitle">Sábado, 8 de agosto <span>•</span> <b>Restaurante aberto</b></p>
+            <h1>{activeView === "Visão geral" ? "Bom dia, Rafael! 👋" : activeView}</h1>
+            {activeView === "Visão geral" && (
+              <p className="topbar-subtitle">{todayLabel} <span>•</span> <b><i /> Restaurante aberto</b></p>
+            )}
           </div>
           <div className="topbar-actions">
             <label className="search-box">
               <span>⌕</span>
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar pedido ou cliente" />
+              <input ref={searchInputRef} aria-label="Buscar pedido ou cliente" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar pedido ou cliente..." />
               <kbd>⌘ K</kbd>
             </label>
-            <button className="round-button notification" type="button" aria-label="Notificações" onClick={() => notify("Você tem 3 novas notificações.")}>♢<i /></button>
-            <div className="live-status"><i /> Ao vivo</div>
+            <button className="round-button notification" type="button" aria-label="Notificações" onClick={() => notify("Você tem novas notificações.")}>🔔<i /></button>
+            <button className="live-status" type="button"><i /> Ao vivo</button>
           </div>
         </header>
 
@@ -434,6 +538,7 @@ export function RestaurantDashboard() {
             onFilter={setOrderFilter}
             onAdvance={advanceOrder}
             onOpenFee={() => setFeeModal(true)}
+            onNotify={notify}
           />
         )}
         {activeView === "WhatsApp" && (
@@ -456,8 +561,9 @@ export function RestaurantDashboard() {
       </main>
 
       {feeModal && pendingFee && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={() => setFeeModal(false)}>
-          <section className="fee-modal" role="dialog" aria-modal="true" aria-labelledby="fee-title" onMouseDown={(event) => event.stopPropagation()}>
+        <div className="modal-backdrop">
+          <button className="modal-scrim" type="button" aria-label="Fechar taxa de entrega" onClick={() => setFeeModal(false)} />
+          <section className="fee-modal" role="dialog" aria-modal="true" aria-labelledby="fee-title">
             <button className="modal-close" type="button" aria-label="Fechar" onClick={() => setFeeModal(false)}>×</button>
             <span className="modal-icon">➜</span>
             <p className="eyebrow orange">PEDIDO DO SITE</p>
@@ -469,7 +575,7 @@ export function RestaurantDashboard() {
             </div>
             <label className="fee-field">
               <span>Taxa de entrega</span>
-              <span className="money-input"><b>R$</b><input autoFocus value={deliveryFee} onChange={(event) => setDeliveryFee(event.target.value)} inputMode="decimal" /></span>
+              <span className="money-input"><b>R$</b><input ref={feeInputRef} aria-label="Taxa de entrega em reais" value={deliveryFee} onChange={(event) => setDeliveryFee(event.target.value)} inputMode="decimal" /></span>
             </label>
             <div className="fee-summary"><span>Subtotal do pedido</span><strong>{formatMoney(pendingFee.total)}</strong><span>Total com entrega</span><strong>{formatMoney(pendingFee.total + (Number(deliveryFee.replace(",", ".")) || 0))}</strong></div>
             <button className="primary-button wide" type="button" onClick={applyFee}>Confirmar pedido e enviar à cozinha</button>
@@ -478,17 +584,18 @@ export function RestaurantDashboard() {
       )}
 
       {addItemModal && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={() => setAddItemModal(false)}>
-          <section className="fee-modal pdv-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
+        <div className="modal-backdrop">
+          <button className="modal-scrim" type="button" aria-label="Fechar catálogo" onClick={() => setAddItemModal(false)} />
+          <section className="fee-modal pdv-modal" role="dialog" aria-modal="true" aria-labelledby="catalog-title">
             <button className="modal-close" type="button" aria-label="Fechar" onClick={() => setAddItemModal(false)}>×</button>
             <p className="eyebrow orange">CATÁLOGO</p>
-            <h2>Adicionar à Mesa {String(selectedTable).padStart(2, "0")}</h2>
+            <h2 id="catalog-title">Adicionar à Mesa {String(selectedTable).padStart(2, "0")}</h2>
             <div className="modal-content">
               <div className="catalog-grid">
                 {menuItems.map((item) => {
                   const inCart = cart.find(c => c.name === item.name)?.quantity || 0;
                   return (
-                    <article className="catalog-item" key={item.name} onClick={() => setCart(c => {
+                    <button className="catalog-item" type="button" disabled={!item.available} key={item.name} onClick={() => setCart(c => {
                       const exists = c.find(i => i.name === item.name);
                       if (exists) return c.map(i => i.name === item.name ? { ...i, quantity: i.quantity + 1 } : i);
                       return [...c, { name: item.name, quantity: 1, price: item.price }];
@@ -497,14 +604,14 @@ export function RestaurantDashboard() {
                       <div className="info">
                         <div>
                           <h3>{item.name}</h3>
-                          <p>{item.category}</p>
+                          <p>{item.available ? item.category : "Indisponível"}</p>
                         </div>
                         <div className="price-row">
                           <strong>{formatMoney(item.price)}</strong>
-                          <button className="add-btn" type="button">{inCart > 0 ? inCart : "+"}</button>
+                          <span className="add-btn" aria-hidden="true">{inCart > 0 ? inCart : "+"}</span>
                         </div>
                       </div>
-                    </article>
+                    </button>
                   );
                 })}
               </div>
@@ -517,11 +624,12 @@ export function RestaurantDashboard() {
       )}
 
       {checkoutModal && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={() => setCheckoutModal(false)}>
-          <section className="fee-modal pdv-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
+        <div className="modal-backdrop">
+          <button className="modal-scrim" type="button" aria-label="Fechar pagamento" onClick={() => setCheckoutModal(false)} />
+          <section className="fee-modal pdv-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
             <button className="modal-close" type="button" aria-label="Fechar" onClick={() => setCheckoutModal(false)}>×</button>
             <p className="eyebrow orange">FECHAR CONTA</p>
-            <h2>Mesa {String(selectedTable).padStart(2, "0")}</h2>
+            <h2 id="checkout-title">Mesa {String(selectedTable).padStart(2, "0")}</h2>
             
             <div className="checkout-grid">
               <div>
@@ -539,7 +647,7 @@ export function RestaurantDashboard() {
                 </div>
 
                 <div className="discount-box">
-                  <input type="number" placeholder="Desconto (%)" value={discount} onChange={e => setDiscount(e.target.value)} min="0" max="100" />
+                  <input aria-label="Desconto em porcentagem" type="number" placeholder="Desconto (%)" value={discount} onChange={e => setDiscount(e.target.value)} min="0" max="100" />
                   <button type="button" onClick={applyDiscount}>APLICAR</button>
                 </div>
               </div>
@@ -556,18 +664,18 @@ export function RestaurantDashboard() {
                 </div>
 
                 <div className="payment-methods">
-                  <div className={`payment-method ${paymentMethod === "Pix" ? "selected" : ""}`} onClick={() => setPaymentMethod("Pix")}>
+                  <button type="button" aria-pressed={paymentMethod === "Pix"} className={`payment-method ${paymentMethod === "Pix" ? "selected" : ""}`} onClick={() => setPaymentMethod("Pix")}>
                     <div className="icon">◈</div>
                     <div><strong>Pix</strong><small>Cobrado na maquininha</small></div>
-                  </div>
-                  <div className={`payment-method ${paymentMethod === "Crédito" ? "selected" : ""}`} onClick={() => setPaymentMethod("Crédito")}>
+                  </button>
+                  <button type="button" aria-pressed={paymentMethod === "Crédito"} className={`payment-method ${paymentMethod === "Crédito" ? "selected" : ""}`} onClick={() => setPaymentMethod("Crédito")}>
                     <div className="icon">💳</div>
                     <div><strong>Cartão de Crédito</strong><small>Visa, Mastercard</small></div>
-                  </div>
-                  <div className={`payment-method ${paymentMethod === "Débito" ? "selected" : ""}`} onClick={() => setPaymentMethod("Débito")}>
+                  </button>
+                  <button type="button" aria-pressed={paymentMethod === "Débito"} className={`payment-method ${paymentMethod === "Débito" ? "selected" : ""}`} onClick={() => setPaymentMethod("Débito")}>
                     <div className="icon">💳</div>
                     <div><strong>Cartão de Débito</strong><small>Visa, Elo, Mastercard</small></div>
-                  </div>
+                  </button>
                 </div>
 
               </div>
@@ -580,7 +688,7 @@ export function RestaurantDashboard() {
         </div>
       )}
 
-      {toast && <div className="toast"><span>✓</span>{toast}</div>}
+      {toast && <div className="toast" role="status" aria-live="polite"><span>✓</span>{toast}</div>}
     </div>
   );
 }
@@ -607,18 +715,19 @@ function Overview({
   onAdvance: (id: number) => void;
 }) {
   const occupied = tables.filter((table) => table.status === "Ocupada" || table.status === "Conta").length;
+  
   return (
     <div className="page-content overview-page">
       <section className="metric-grid">
-        <Metric title="Vendas hoje" value="R$ 3.842,50" note="12,8% vs. sábado passado" trend="up" icon="R$" />
-        <Metric title="Pedidos" value="47" note="9 em andamento" trend="neutral" icon="▤" />
-        <Metric title="Via WhatsApp" value="31" note="66% dos pedidos" trend="whatsapp" icon="◉" />
-        <Metric title="Mesas ocupadas" value={`${occupied} / ${tables.length}`} note="21 clientes no salão" trend="neutral" icon="▦" />
+        <Metric title="Vendas hoje" value="R$ 3.842,50" note="12,8% vs. sábado passado" color="purple" icon="🛍️" path="M0,25 Q10,15 20,22 T40,20 T60,28 T80,24 T100,10" />
+        <Metric title="Pedidos" value="47" note="9 em andamento" color="green" icon="📋" path="M0,28 Q15,28 30,20 T60,25 T90,20 T100,22" />
+        <Metric title="Via WhatsApp" value="31" note="66% dos pedidos" color="blue" icon="💬" path="M0,20 Q20,30 40,15 T80,25 T100,20" />
+        <Metric title="Mesas ocupadas" value={`${occupied} / ${tables.length}`} note="21 clientes no salão" color="orange" icon="👥" path="M0,20 Q20,10 40,25 T70,15 T100,20" />
       </section>
 
       {pendingFee && (
         <section className="attention-banner">
-          <span className="attention-icon">!</span>
+          <span className="attention-icon">⋮</span>
           <div><strong>Pedido #{pendingFee.id} aguardando taxa de entrega</strong><p>{pendingFee.customer} • {pendingFee.detail} • feito pelo site há 3 min</p></div>
           <button type="button" onClick={onOpenFee}>Adicionar taxa <span>→</span></button>
         </section>
@@ -626,15 +735,15 @@ function Overview({
 
       <div className="overview-grid">
         <section className="panel orders-panel">
-          <PanelHeader title="Pedidos agora" subtitle="9 pedidos em andamento" action="Ver todos" onAction={() => onView("Pedidos")} />
+          <PanelHeader title="Pedidos agora" subtitle="8 pedidos em andamento" action="Ver todos" onAction={() => onView("Pedidos")} />
           <div className="order-list">
             {orders.slice(0, 5).map((order) => (
-              <article className="order-row" key={order.id}>
-                <span className={`channel-mark ${order.channel.toLowerCase()}`}>{order.channel === "WhatsApp" ? "◉" : order.channel === "Site" ? "⌘" : "▦"}</span>
+              <article className="order-row" key={order.id} onClick={() => order.feePending ? onOpenFee() : onAdvance(order.id)}>
+                <span className={`channel-mark ${order.channel.toLowerCase()}`}>{order.channel === "WhatsApp" ? "💬" : order.channel === "Site" ? "⌘" : "🍽️"}</span>
                 <div className="order-main"><div><strong>#{order.id}</strong><span className="dot-separator">•</span><b>{order.customer}</b></div><small>{order.detail}</small></div>
                 <div className="order-time"><small>{order.time}</small><strong>{formatMoney(order.total)}</strong></div>
                 <StatusBadge status={order.status} pending={order.feePending} />
-                <button className="row-action" type="button" aria-label={`Avançar pedido ${order.id}`} onClick={() => order.feePending ? onOpenFee() : onAdvance(order.id)}>›</button>
+                <button className="row-action" type="button" aria-label={`Avançar pedido ${order.id}`}>›</button>
               </article>
             ))}
           </div>
@@ -642,50 +751,50 @@ function Overview({
 
         <section className="panel ai-panel">
           <PanelHeader title="IA no WhatsApp" subtitle="Atendimento automático" extra={<Toggle enabled={aiEnabled} onToggle={onToggleAi} />} />
-          <div className="ai-status-row"><span className="spark">✦</span><span><strong>{aiEnabled ? "IA atendendo agora" : "IA pausada"}</strong><small>{aiEnabled ? "5 conversas ativas" : "Atendimento manual ativo"}</small></span><i /></div>
+          <div className="ai-status-row"><span className="spark">✦</span><span><strong>{aiEnabled ? "IA atendendo agora" : "IA pausada"}</strong><small>{aiEnabled ? "6 conversas ativas" : "Atendimento manual ativo"}</small></span><i /></div>
+          
           <div className="mini-chat">
-            <div className="chat-meta"><span className="avatar coral">CR</span><span><strong>Camila Rocha</strong><small>há 1 min</small></span><span className="whatsapp-mini">◉</span></div>
+            <div className="chat-meta"><span className="avatar coral">CR</span><div><strong>Camila Rocha</strong><small>há 1 min</small></div><span className="whatsapp-mini">💬</span></div>
             <div className="customer-message">Meu pedido já saiu para entrega?</div>
-            <div className="ai-message"><span>✦</span><p>Oi, Camila! Seu pedido <strong>#1046</strong> saiu às 10:36 e chega em cerca de 18 min. 😊</p></div>
+            <div className="ai-message"><span>✦</span><div><p>Oi, Camila! Seu pedido <b>#1048</b> saiu às 17:36 e chega em cerca de 18 min. 😊</p></div></div>
           </div>
-          <button className="ghost-button wide" type="button" onClick={() => onView("WhatsApp")}>Abrir central do WhatsApp <span>→</span></button>
-          <div className="ai-footer"><span><b>94%</b> resolvidos pela IA hoje</span><span><b>1m 12s</b> tempo médio</span></div>
+          
+          <div className="ai-footer">
+            <a href="#" onClick={(e) => { e.preventDefault(); onView("WhatsApp"); }}>Ver todas as conversas <span>→</span></a>
+          </div>
         </section>
+      </div>
 
-        <section className="panel tables-panel">
-          <PanelHeader title="Salão" subtitle={`${occupied} mesas ocupadas • 2 reservadas`} action="Ver mapa" onAction={() => onView("Salão")} />
-          <div className="table-preview-grid">
-            {tables.map((table) => (
-              <button key={table.number} type="button" className={`mini-table ${table.status.toLowerCase()}`} onClick={() => onSelectTable(table.number)}>
-                <span>M{String(table.number).padStart(2, "0")}</span>
-                <small>{table.status === "Livre" ? "Livre" : table.status === "Reservada" ? table.time : formatMoney(table.total)}</small>
-                {table.guests > 0 && <i>{table.guests}</i>}
-              </button>
-            ))}
-          </div>
-          <div className="legend"><span><i className="free" />Livre</span><span><i className="busy" />Ocupada</span><span><i className="bill" />Pediu conta</span><span><i className="reserved" />Reservada</span></div>
-        </section>
-
-        <section className="panel performance-panel">
-          <PanelHeader title="Ritmo de hoje" subtitle="Pedidos por hora" action="Relatório" onAction={() => onView("Relatórios")} />
-          <div className="small-chart">
-            {[18, 28, 38, 55, 72, 84, 65, 92, 75, 58].map((height, index) => <i key={index} style={{ height: `${height}%` }} className={index === 7 ? "peak" : ""} />)}
-          </div>
-          <div className="chart-labels"><span>11h</span><span>13h</span><span>15h</span><span>17h</span><span>19h</span><span>21h</span></div>
-          <div className="performance-summary"><span><small>Pico de pedidos</small><strong>18h–20h</strong></span><span><small>Ticket médio</small><strong>R$ 81,76</strong></span></div>
-        </section>
+      <div className="bottom-panel">
+        <h2>Resumo de vendas</h2>
+        <select><option>Últimos 7 dias ⌄</option></select>
+        <div className="bottom-metrics">
+          <div className="bottom-metric"><small>Total</small><strong>R$ 24.850,00</strong></div>
+          <div className="bottom-metric"><small>Média diária</small><strong>R$ 3.550,00</strong></div>
+          <div className="bottom-metric"><small>Ticket médio</small><strong>R$ 78,40</strong></div>
+        </div>
+        <svg className="bottom-chart-mock" viewBox="0 0 1000 120" preserveAspectRatio="none">
+           <defs>
+             <linearGradient id="grad-purple" x1="0" y1="0" x2="0" y2="1">
+               <stop offset="0%" stopColor="var(--purple)" stopOpacity="0.4" />
+               <stop offset="100%" stopColor="var(--purple)" stopOpacity="0" />
+             </linearGradient>
+           </defs>
+           <path d="M0,100 L100,90 L200,60 L300,110 L400,20 L500,40 L600,80 L700,50 L800,70 L900,30 L1000,10" fill="none" stroke="var(--purple)" strokeWidth="3" vectorEffect="non-scaling-stroke" />
+           <path d="M0,100 L100,90 L200,60 L300,110 L400,20 L500,40 L600,80 L700,50 L800,70 L900,30 L1000,10 L1000,120 L0,120 Z" fill="url(#grad-purple)" />
+        </svg>
       </div>
     </div>
   );
 }
 
-function OrdersView({ orders, filter, onFilter, onAdvance, onOpenFee }: { orders: Order[]; filter: string; onFilter: (filter: string) => void; onAdvance: (id: number) => void; onOpenFee: () => void }) {
+function OrdersView({ orders, filter, onFilter, onAdvance, onOpenFee, onNotify }: { orders: Order[]; filter: string; onFilter: (filter: string) => void; onAdvance: (id: number) => void; onOpenFee: () => void; onNotify: (message: string) => void }) {
   const columns: OrderStatus[] = ["Novo", "Confirmado", "Em preparo", "Pronto", "Saiu"];
   return (
     <div className="page-content">
       <div className="section-toolbar">
         <div className="filter-tabs">{["Todos", "WhatsApp", "Site", "Salão"].map((item) => <button type="button" className={filter === item ? "active" : ""} key={item} onClick={() => onFilter(item)}>{item}{item !== "Todos" && <small>{initialOrders.filter((order) => order.channel === item).length}</small>}</button>)}</div>
-        <button className="primary-button" type="button">+ Novo pedido</button>
+        <button className="primary-button" type="button" onClick={() => onNotify("O cadastro de pedidos será conectado na próxima etapa.")}>+ Novo pedido</button>
       </div>
       <section className="kanban-board">
         {columns.map((column) => {
@@ -747,7 +856,7 @@ function WhatsAppView({ aiEnabled, onToggleAi, onNotify }: { aiEnabled: boolean;
           {aiEnabled && <div className="ai-thinking"><span>✦</span> A IA está acompanhando esta conversa</div>}
           <div ref={scrollRef} />
         </div>
-        <div className="composer"><button type="button" onClick={() => onNotify("Menu de anexos aberto")}>＋</button><input value={message} onChange={(event) => setMessage(event.target.value)} onKeyDown={(event) => event.key === "Enter" && send()} placeholder="Digite uma mensagem..." /><button className="send-button" type="button" onClick={send}>➜</button></div>
+        <div className="composer"><button type="button" aria-label="Adicionar anexo" onClick={() => onNotify("Menu de anexos aberto")}>＋</button><input aria-label="Mensagem para Camila Rocha" value={message} onChange={(event) => setMessage(event.target.value)} onKeyDown={(event) => event.key === "Enter" && send()} placeholder="Digite uma mensagem..." /><button className="send-button" type="button" aria-label="Enviar mensagem" onClick={send}>➜</button></div>
       </section>
       <aside className="chat-insights panel">
         <div className="insights-header"><span className="spark">✦</span><span><strong>Copiloto IA</strong><small>Contexto da conversa</small></span><Toggle enabled={aiEnabled} onToggle={onToggleAi} /></div>
@@ -791,7 +900,7 @@ function DiningView({ tables, selected, onSelect, onAddItem, onClose, onNotify }
         <div className="waiter-row"><span className="avatar">RS</span><span><small>Garçom responsável</small><strong>Rafael Santos</strong></span><button type="button">Trocar</button></div>
         <div className="check-items">
           {selected.items.length > 0 ? selected.items.map((item, index) => (
-            <div className="check-item" key={`${item.name}-${index}`}><b>{item.quantity}×</b><span><strong>{item.name}</strong><small>Observação padrão</small></span><strong>{formatMoney(item.price)}</strong></div>
+            <div className="check-item" key={`${item.name}-${index}`}><b>{item.quantity}×</b><span><strong>{item.name}</strong><small>Observação padrão</small></span><strong>{formatMoney(item.price * item.quantity)}</strong></div>
           )) : <div className="empty-check"><span>◇</span><strong>Nenhum item lançado</strong><small>Adicione o primeiro item desta mesa.</small></div>}
         </div>
         <button className="add-item-button" type="button" onClick={onAddItem}>＋ Adicionar item</button>
@@ -854,8 +963,32 @@ function ReportsView() {
   );
 }
 
-function Metric({ title, value, note, trend, icon, onAction }: { title: string; value: string; note: string; trend: string; icon: string; onAction?: () => void }) {
-  return <article className="metric-card"><div className={`metric-icon ${trend}`}>{icon}</div><div className="metric-copy"><span>{title}</span><strong>{value}</strong><small className={trend === "up" ? "positive" : ""}>{trend === "up" && "↗ "}{note}</small></div><button type="button" aria-label={`Detalhes de ${title}`} onClick={onAction}>•••</button></article>;
+function Metric({ title, value, note, color, trend, icon, path, onAction }: { title: string; value: string; note: string; color?: string; trend?: string; icon: string; path?: string; onAction?: () => void }) {
+  const c = color || (trend === "whatsapp" ? "blue" : trend === "up" ? "green" : "purple");
+  const p = path || "M0,25 Q10,15 20,22 T40,20 T60,28 T80,24 T100,10";
+  return (
+    <article className="metric-card">
+      <div className="metric-card-header">
+        <div className={`metric-icon ${c}`}>{icon}</div>
+        <div className="metric-info">
+          <span>{title}</span>
+          <strong>{value}</strong>
+          <small className={c === "purple" || c === "green" ? "up" : ""}>{note}</small>
+        </div>
+      </div>
+      <button type="button" aria-label={`Detalhes de ${title}`} onClick={onAction} style={{ position: "absolute", top: 16, right: 16, background: "transparent", border: 0, color: "var(--muted)", cursor: "pointer" }}>•••</button>
+      <svg viewBox="0 0 100 30" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={`grad-${c}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={`var(--${c})`} stopOpacity="0.4" />
+            <stop offset="100%" stopColor={`var(--${c})`} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={`${p} L100,35 L0,35 Z`} fill={`url(#grad-${c})`} />
+        <path d={p} fill="none" stroke={`var(--${c})`} strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      </svg>
+    </article>
+  );
 }
 
 function PanelHeader({ title, subtitle, action, onAction, extra }: { title: string; subtitle?: string; action?: string; onAction?: () => void; extra?: React.ReactNode }) {
