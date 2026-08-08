@@ -15,17 +15,30 @@ const geistMono = Geist_Mono({
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
-  const host =
+  const host = (
     requestHeaders.get("x-forwarded-host") ??
     requestHeaders.get("host") ??
-    "localhost:3000";
+    "localhost:3000"
+  )
+    .split(",")[0]
+    .trim();
+  const forwardedProtocol = requestHeaders
+    .get("x-forwarded-proto")
+    ?.split(",")[0]
+    .trim();
+  const localHost = /^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(host);
   const protocol =
-    requestHeaders.get("x-forwarded-proto") ??
-    (host.includes("localhost") ? "http" : "https");
-  const origin = `${protocol}://${host}`;
+    localHost && forwardedProtocol !== "https" ? "http" : "https";
+
+  let metadataBase: URL;
+  try {
+    metadataBase = new URL(`${protocol}://${host}`);
+  } catch {
+    metadataBase = new URL("http://localhost:3000");
+  }
 
   return {
-    metadataBase: new URL(origin),
+    metadataBase,
     title: "2Type Control — Central do restaurante",
     description: "Pedidos, WhatsApp, entregas e mesas em uma única central.",
     openGraph: {
@@ -34,7 +47,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       images: [
         {
-          url: `${origin}/og.png`,
+          url: new URL("/og.png", metadataBase).href,
           width: 1536,
           height: 1024,
           alt: "2Type Control — Operação fluida. Controle total.",
@@ -45,7 +58,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: "2Type Control — Central do restaurante",
       description: "Operação fluida. Controle total.",
-      images: [`${origin}/og.png`],
+      images: [new URL("/og.png", metadataBase).href],
     },
   };
 }

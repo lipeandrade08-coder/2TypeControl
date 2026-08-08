@@ -378,3 +378,56 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--purple); ou
 @media (max-width: 560px) {
   .topbar h1 { font-size: 18px; }.topbar-subtitle { font-size: 9px; }.metric-grid { grid-template-columns: 1fr 1fr; }.attention-banner { align-items: flex-start; flex-wrap: wrap; }.attention-banner button { width: 100%; }.order-row { grid-template-columns: 31px 1fr 78px 16px; }.order-row .status-badge { display: none; }.order-time { font-size: 8px; }.ai-footer { flex-direction: column; gap: 5px; }.table-preview-grid { grid-template-columns: repeat(3, 1fr); }.legend { flex-wrap: wrap; }.section-toolbar { align-items: flex-start; gap: 10px; flex-direction: column; }.filter-tabs { max-width: 100%; overflow-x: auto; }.dining-layout { display: block; }.floor-panel { margin-bottom: 12px; }.floor-map { height: 590px; min-width: 620px; transform-origin: top left; }.floor-panel { overflow-x: auto; }.menu-table-panel { overflow-x: auto; }.menu-table-heading,.menu-table-row { min-width: 760px; }.chat-body { padding: 11px; }.bubble { max-width: 88%; }.toast { left: 16px; right: 16px; bottom: 16px; }.fee-modal { padding: 20px; }
 }
+
+/* CRM Spreadsheet View */
+.crm-header-section { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+.crm-header-titles h1 { font-size: 24px; color: white; margin-bottom: 4px; }
+.crm-header-titles h1 span { color: var(--purple); font-weight: normal; font-size: 18px; }
+.crm-header-titles p { font-size: 11px; color: var(--muted); }
+.crm-header-actions { display: flex; gap: 12px; }
+
+.spreadsheet-container { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; position: relative; }
+.spreadsheet-toolbar { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); background: rgba(255,255,255,0.01); }
+.spreadsheet-search { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.1); width: 300px; height: 36px; }
+.spreadsheet-search input { font-size: 10px; }
+.spreadsheet-filters { display: flex; gap: 8px; }
+.spreadsheet-filters select { height: 36px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 0 12px; font-size: 10px; outline: none; appearance: none; cursor: pointer; }
+
+.spreadsheet-table-wrapper { overflow-x: auto; min-height: 400px; }
+.spreadsheet-table { width: 100%; border-collapse: collapse; text-align: left; }
+.spreadsheet-table th { padding: 12px 16px; font-size: 9px; font-weight: 800; color: #6f7572; text-transform: uppercase; border-bottom: 1px solid var(--line); background: rgba(255,255,255,0.02); white-space: nowrap; }
+.spreadsheet-table td { padding: 14px 16px; font-size: 10px; color: #d4d4d8; border-bottom: 1px solid rgba(255,255,255,0.03); white-space: nowrap; vertical-align: middle; transition: background 0.2s; }
+.spreadsheet-row:hover td { background: rgba(255,255,255,0.02); }
+.spreadsheet-row.selected td { background: rgba(110, 48, 235, 0.05); }
+
+.checkbox-cell { width: 40px; text-align: center !important; }
+.checkbox-cell input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--purple); cursor: pointer; }
+
+.client-name { display: flex; align-items: center; gap: 10px; }
+.client-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--purple-soft); color: var(--purple); display: grid; place-items: center; font-weight: 800; font-size: 10px; }
+.client-name strong { color: white; font-size: 11px; }
+
+.client-phone { color: var(--muted) !important; font-variant-numeric: tabular-nums; }
+.client-money { font-weight: 800; font-variant-numeric: tabular-nums; }
+.client-orders { text-align: center; }
+.client-date { color: var(--muted) !important; }
+
+.fav-dish { background: rgba(255,255,255,0.04); padding: 4px 8px; border-radius: 6px; font-size: 9px; border: 1px solid rgba(255,255,255,0.05); color: #a1a1aa; }
+
+.crm-badge { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 20px; font-size: 9px; font-weight: 800; background: rgba(255,255,255,0.05); color: var(--muted); }
+.crm-badge.vip { background: rgba(255, 152, 0, 0.15); color: var(--orange); }
+.crm-badge.recurrent { background: rgba(33, 150, 243, 0.15); color: #1976d2; }
+.crm-badge.new { background: rgba(76, 175, 80, 0.15); color: var(--forest); }
+.crm-badge.risk { background: rgba(244, 67, 54, 0.15); color: #f44336; }
+
+.action-cell { text-align: right; }
+.row-actions { display: flex; gap: 6px; justify-content: flex-end; opacity: 0; transition: opacity 0.2s; }
+.spreadsheet-row:hover .row-actions { opacity: 1; }
+.action-btn { height: 28px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: 6px; border: 0; font-size: 9px; font-weight: 800; cursor: pointer; color: white; }
+.action-btn.wa-btn { background: var(--forest); }
+.action-btn.view-btn { background: rgba(255,255,255,0.05); color: var(--muted); }
+.action-btn:hover { filter: brightness(1.2); }
+
+.bulk-actions-bar { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--canvas); border: 1px solid var(--line); padding: 12px 24px; border-radius: 12px; display: flex; align-items: center; gap: 24px; box-shadow: 0 12px 40px rgba(0,0,0,0.4); z-index: 10; animation: toast-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.bulk-actions-bar span { font-size: 11px; font-weight: 800; color: white; }
+.bulk-buttons { display: flex; gap: 8px; }

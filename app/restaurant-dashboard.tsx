@@ -1022,51 +1022,135 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
 }
 
 function CrmView() {
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  
   const crmData = [
-    { id: "1052", date: "08/08", time: "12:45", channel: "Salão", customer: "Mesa 02", total: 114.50 },
-    { id: "1051", date: "08/08", time: "12:30", channel: "WhatsApp", customer: "Camila Rocha", total: 84.90 },
-    { id: "1050", date: "08/08", time: "12:15", channel: "Site", customer: "João Silva", total: 156.00 },
-    { id: "1049", date: "08/08", time: "11:50", channel: "Salão", customer: "Mesa 05", total: 45.00 },
-    { id: "1048", date: "07/08", time: "22:15", channel: "WhatsApp", customer: "Pedro Nogueira", total: 210.30 },
-    { id: "1047", date: "07/08", time: "21:40", channel: "Site", customer: "Mariana Costa", total: 78.50 },
-    { id: "1046", date: "07/08", time: "21:10", channel: "Salão", customer: "Mesa 01", total: 320.00 },
-    { id: "1045", date: "07/08", time: "20:30", channel: "WhatsApp", customer: "Lucas Mendes", total: 65.00 },
+    { id: "C01", name: "Camila Rocha", phone: "(11) 98765-4321", totalSpent: 1254.90, avgTicket: 89.60, orders: 14, lastVisit: "08/08", favDish: "Burger Artesanal", segment: "VIP" },
+    { id: "C02", name: "João Silva", phone: "(11) 91234-5678", totalSpent: 356.00, avgTicket: 71.20, orders: 5, lastVisit: "08/08", favDish: "Pizza Margherita", segment: "Recorrente" },
+    { id: "C03", name: "Mariana Costa", phone: "(11) 99876-5432", totalSpent: 178.50, avgTicket: 89.25, orders: 2, lastVisit: "07/08", favDish: "Porção de Fritas", segment: "Novo" },
+    { id: "C04", name: "Pedro Nogueira", phone: "(11) 94567-8901", totalSpent: 2110.30, avgTicket: 105.50, orders: 20, lastVisit: "07/08", favDish: "Combo Casal", segment: "VIP" },
+    { id: "C05", name: "Lucas Mendes", phone: "(11) 97654-3210", totalSpent: 65.00, avgTicket: 65.00, orders: 1, lastVisit: "07/08", favDish: "X-Bacon", segment: "Em Risco" },
+    { id: "C06", name: "Ana Beatriz", phone: "(11) 98888-7777", totalSpent: 489.00, avgTicket: 61.12, orders: 8, lastVisit: "02/08", favDish: "Refrigerante 2L", segment: "Recorrente" },
+    { id: "C07", name: "Felipe Almeida", phone: "(11) 93333-2222", totalSpent: 112.00, avgTicket: 112.00, orders: 1, lastVisit: "01/08", favDish: "Pizza Calabresa", segment: "Novo" },
+    { id: "C08", name: "Juliana Santos", phone: "(11) 95555-4444", totalSpent: 870.20, avgTicket: 79.10, orders: 11, lastVisit: "25/07", favDish: "Burger Duplo", segment: "Recorrente" },
   ];
+
+  const toggleClient = (id: string) => {
+    setSelectedClients(prev => prev.includes(id) ? prev.filter(cId => cId !== id) : [...prev, id]);
+  };
+
+  const toggleAll = () => {
+    if (selectedClients.length === crmData.length) {
+      setSelectedClients([]);
+    } else {
+      setSelectedClients(crmData.map(c => c.id));
+    }
+  };
+
+  const getSegmentBadge = (segment: string) => {
+    switch(segment) {
+      case "VIP": return <span className="crm-badge vip">🌟 VIP</span>;
+      case "Recorrente": return <span className="crm-badge recurrent">🔄 Recorrente</span>;
+      case "Novo": return <span className="crm-badge new">🟢 Novo</span>;
+      case "Em Risco": return <span className="crm-badge risk">🔴 Em Risco</span>;
+      default: return <span className="crm-badge">{segment}</span>;
+    }
+  };
 
   return (
     <div className="page-content crm-page">
-      <div className="crm-header">
-        <div>
-          <h1>CRM (Histórico de Consumo)</h1>
-          <p>Consumo diário detalhado de todas as origens.</p>
+      <div className="crm-header-section">
+        <div className="crm-header-titles">
+          <h1>Clientes <span>(CRM)</span></h1>
+          <p>Gestão completa de base, inteligência de consumo e retenção.</p>
+        </div>
+        <div className="crm-header-actions">
+          <button className="ghost-button"><Icon name="configuracoes" /> Exportar Base</button>
+          <button className="primary-button"><Icon name="entregas" /> Novo Cliente</button>
         </div>
       </div>
-      
-      <div style={{ overflowX: "auto" }}>
-        <table className="crm-table">
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Horário</th>
-              <th>Origem</th>
-              <th>Pedido / Cliente</th>
-              <th>Consumo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {crmData.map(item => (
-              <tr key={item.id} className="crm-row">
-                <td>{item.date}</td>
-                <td className="time-col">{item.time}</td>
-                <td className="channel-col">
-                  <span className={item.channel.toLowerCase()}>{item.channel === "WhatsApp" ? "◉" : item.channel === "Site" ? "⌘" : "▦"} {item.channel}</span>
-                </td>
-                <td><strong>#{item.id}</strong> • {item.customer}</td>
-                <td>{formatMoney(item.total)}</td>
+
+      <div className="spreadsheet-container">
+        <div className="spreadsheet-toolbar">
+          <div className="search-box spreadsheet-search">
+            <Icon name="visao-geral" /> 
+            <input type="text" placeholder="Buscar cliente por nome ou telefone..." />
+            <kbd>⌘K</kbd>
+          </div>
+          <div className="spreadsheet-filters">
+            <select>
+              <option>Todos os Segmentos</option>
+              <option>VIP</option>
+              <option>Recorrentes</option>
+              <option>Novos</option>
+              <option>Em Risco</option>
+            </select>
+            <select>
+              <option>Mais recentes</option>
+              <option>Maior LTV</option>
+              <option>Maior Ticket</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="spreadsheet-table-wrapper">
+          <table className="spreadsheet-table">
+            <thead>
+              <tr>
+                <th className="checkbox-cell">
+                  <input type="checkbox" checked={selectedClients.length === crmData.length && crmData.length > 0} onChange={toggleAll} />
+                </th>
+                <th>Cliente</th>
+                <th>Contato</th>
+                <th>LTV (Total)</th>
+                <th>Tkt. Médio</th>
+                <th>Pedidos</th>
+                <th>Última Visita</th>
+                <th>Prato Favorito</th>
+                <th>Status</th>
+                <th className="action-cell"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {crmData.map(client => (
+                <tr key={client.id} className={`spreadsheet-row ${selectedClients.includes(client.id) ? 'selected' : ''}`}>
+                  <td className="checkbox-cell">
+                    <input type="checkbox" checked={selectedClients.includes(client.id)} onChange={() => toggleClient(client.id)} />
+                  </td>
+                  <td>
+                    <div className="client-name">
+                      <div className="client-avatar">{client.name.charAt(0)}</div>
+                      <strong>{client.name}</strong>
+                    </div>
+                  </td>
+                  <td className="client-phone">{client.phone}</td>
+                  <td className="client-money">{formatMoney(client.totalSpent)}</td>
+                  <td className="client-money">{formatMoney(client.avgTicket)}</td>
+                  <td className="client-orders">{client.orders}</td>
+                  <td className="client-date">{client.lastVisit}</td>
+                  <td><span className="fav-dish">{client.favDish}</span></td>
+                  <td>{getSegmentBadge(client.segment)}</td>
+                  <td className="action-cell">
+                    <div className="row-actions">
+                      <button title="Enviar WhatsApp" className="action-btn wa-btn"><Icon name="entregas" /> Zap</button>
+                      <button title="Ver Perfil" className="action-btn view-btn">Ver</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        
+        {selectedClients.length > 0 && (
+          <div className="bulk-actions-bar">
+            <span>{selectedClients.length} cliente(s) selecionado(s)</span>
+            <div className="bulk-buttons">
+              <button className="primary-button">Disparar Campanha (WhatsApp)</button>
+              <button className="ghost-button">Exportar Seleção</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

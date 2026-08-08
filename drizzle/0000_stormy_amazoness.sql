@@ -6,6 +6,8 @@ CREATE TABLE `orders` (
 	`total` integer NOT NULL,
 	`time` text NOT NULL,
 	`status` text DEFAULT 'Novo' NOT NULL,
-	`fee_pending` integer DEFAULT false,
+	`fee_pending` integer DEFAULT false NOT NULL,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
+--> statement-breakpoint
+CREATE INDEX `idx_orders_created_at_id` ON `orders` (`created_at`,`id`);

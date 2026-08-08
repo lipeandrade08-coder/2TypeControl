@@ -1,100 +1,79 @@
-# vinext-starter
+# 2Type Control
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+Central de operação para restaurantes que reúne pedidos do site e WhatsApp,
+salão, cardápio, entregas, relatórios e histórico de clientes em uma única
+interface.
 
-## Prerequisites
+## Tecnologias
 
-- Node.js `>=22.13.0`
+- React 19 e vinext (App Router compatível com Next.js)
+- Cloudflare Workers e D1
+- Drizzle ORM
+- Tailwind CSS 4
+- TypeScript e ESLint
 
-## Quick Start
+## Como executar
+
+Requer Node.js `>=22.13.0`.
 
 ```bash
-npm install
+npm ci
 npm run dev
-npm run build
 ```
 
-This starter does not use `wrangler.jsonc`.
+Validação completa:
 
-## Included Shape
+```bash
+npm run check
+```
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+O comando executa lint, verificação de tipos, build de produção e testes
+automatizados.
 
-## Workspace Auth Headers
+## Persistência
 
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
+Os pedidos recebidos por `/api/orders` são armazenados no D1 por meio do
+binding `DB`, declarado em `.openai/hosting.json`. A tabela e o índice usados
+pela listagem são inicializados de forma idempotente, e as migrações SQL ficam
+em `drizzle/`.
 
-The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
+Valores monetários são persistidos como centavos e expostos pela API em reais.
 
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
+## Integração de pedidos
 
-Treat the full name as optional and fall back to email when it is absent:
+Copie `.env.example` para um arquivo local ignorado pelo Git e configure:
 
-```tsx
-import { headers } from "next/headers";
+- `ORDERS_ALLOWED_ORIGINS`: lista de origens externas autorizadas, separadas
+  por vírgula. A origem da própria aplicação já é permitida.
+- `ORDERS_API_KEY`: chave opcional exigida no header `X-API-Key` para criar
+  pedidos. Em produção, recomenda-se configurá-la para integrações servidor a
+  servidor.
 
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
+Exemplo de corpo aceito por `POST /api/orders`:
 
-  const displayName = fullName ?? email;
-  // ...
+```json
+{
+  "customer": "Marina Alves",
+  "channel": "Site",
+  "detail": "2 pizzas e 1 refrigerante",
+  "total": 94.7,
+  "time": "agora",
+  "status": "Novo",
+  "feePending": true
 }
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+## Estrutura principal
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+- `app/restaurant-dashboard.tsx`: experiência operacional e interações
+- `app/api/orders/`: contrato e rotas da API de pedidos
+- `db/`: schema e acesso ao D1
+- `drizzle/`: migrações SQL
+- `tests/`: testes do produto e do contrato da API
+- `worker/`: entrada do Cloudflare Worker
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+## Estado do produto
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
-
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
-
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
-
-## Useful Commands
-
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+O painel já oferece uma demonstração navegável das áreas operacionais. Pedidos
+recebidos pela API são persistentes; os demais módulos ainda usam dados de
+demonstração e devem ganhar modelos próprios no D1 conforme o produto evoluir.
