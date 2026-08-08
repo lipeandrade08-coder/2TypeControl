@@ -43,14 +43,14 @@ const formatMoney = (value: number) =>
   }).format(value);
 
 const navigation: { label: View; icon: string; badge?: string; group?: string }[] = [
-  { label: "Visão geral", icon: "⌂", group: "OPERAÇÃO" },
-  { label: "Pedidos", icon: "▤", badge: "12" },
-  { label: "WhatsApp", icon: "◉", badge: "5" },
-  { label: "Salão", icon: "▦" },
-  { label: "Cardápio", icon: "◇", group: "GESTÃO" },
-  { label: "Entregas", icon: "➜" },
-  { label: "Relatórios", icon: "↗" },
-  { label: "CRM", icon: "☷" },
+  { label: "Visão geral", icon: "visao-geral", group: "OPERAÇÃO" },
+  { label: "Pedidos", icon: "pedidos", badge: "12" },
+  { label: "WhatsApp", icon: "whatsapp", badge: "5" },
+  { label: "Salão", icon: "salao" },
+  { label: "Cardápio", icon: "cardapio", group: "GESTÃO" },
+  { label: "Entregas", icon: "entregas" },
+  { label: "Relatórios", icon: "relatorios" },
+  { label: "CRM", icon: "crm" },
 ];
 
 const initialOrders: Order[] = [
@@ -200,7 +200,21 @@ const menuItems = [
   { name: "Nhoque artesanal", category: "Massas", price: 44, sold: 8, available: false },
 ];
 
-const Icon = ({ children }: { children: string }) => <span className="icon-box" aria-hidden="true">{children}</span>;
+function AppIcon({ name }: { name: string }) {
+  switch (name) {
+    case 'visao-geral': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 18V10M10 18V6M16 18v-4M22 18V3"/><path d="M3 21h20"/><path d="M4 10l6-4 6 8 6-11"/></svg>;
+    case 'pedidos': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 3.5h6M8 9h8M8 13h5M8 17h7"/></svg>;
+    case 'whatsapp': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4a8 8 0 0 0-7 11.8L4 20l4.4-1.1A8 8 0 1 0 12 4Z"/><path d="M9.1 8.6c.6 2.6 2.7 4.7 5.3 5.4l1.2-1.2M9.1 8.6 8 9.7"/></svg>;
+    case 'salao': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="6" height="5" rx="1.5"/><rect x="14" y="5" width="6" height="5" rx="1.5"/><rect x="4" y="14" width="6" height="5" rx="1.5"/><rect x="14" y="14" width="6" height="5" rx="1.5"/></svg>;
+    case 'cardapio': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M7 4h10a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>;
+    case 'entregas': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h11v10H3z"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>;
+    case 'crm': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="7" r="2.5"/><path d="M3 20c.5-4 2.6-6 5-6s4.5 2 5 6"/><path d="M14 13c3.5 0 5.5 2 6 5"/></svg>;
+    case 'relatorios': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20V10M10 20V5M16 20v-8M22 20V3"/><path d="M3 20h20"/></svg>;
+    default: return <span>{name}</span>;
+  }
+}
+
+const Icon = ({ children }: { children: string }) => <span className="icon-box" aria-hidden="true"><AppIcon name={children} /></span>;
 
 function isOrder(value: unknown): value is Order {
   if (typeof value !== "object" || value === null) return false;
@@ -448,9 +462,8 @@ export function RestaurantDashboard() {
   return (
     <div className="app-shell">
       <aside className={`sidebar ${mobileMenu ? "sidebar-open" : ""}`}>
-        <button className="brand" type="button" onClick={() => chooseView("Visão geral")}>
-          <span className="brand-logo"><Image src="/2type-logo.png" width={34} height={34} alt="" priority /></span>
-          <span className="brand-copy"><strong>2Type</strong><small>CONTROL</small></span>
+        <button className="brand" type="button" onClick={() => chooseView("Visão geral")} style={{ padding: "8px 16px", background: "transparent", border: 0, cursor: "pointer", display: "flex", alignItems: "center" }}>
+          <img src="/2type-control-assets/logos/svg/logo-horizontal-white.svg" alt="2Type Control" style={{ height: 26, width: "auto" }} />
         </button>
 
         <button className="restaurant-switch" type="button" onClick={() => notify("Seletor de unidade aberto.")}>
@@ -957,7 +970,12 @@ function ReportsView() {
   const bars = [38, 44, 52, 46, 68, 74, 82, 58, 63, 71, 88, 76];
   return (
     <div className="page-content reports-page">
-      <section className="metric-grid"><Metric title="Faturamento no mês" value="R$ 86.420" note="18,4% acima de julho" trend="up" icon="R$" /><Metric title="Ticket médio" value="R$ 78,40" note="R$ 6,20 acima da meta" trend="up" icon="↗" /><Metric title="Pedidos no mês" value="1.102" note="67% via WhatsApp" trend="whatsapp" icon="▤" /><Metric title="Tempo médio" value="28 min" note="4 min mais rápido" trend="up" icon="◷" /></section>
+      <section className="metric-grid">
+        <Metric title="Faturamento no mês" value="R$ 86.420" note="18,4% acima de julho" color="purple" icon="🛍️" path="M0,25 Q10,15 20,22 T40,20 T60,28 T80,24 T100,10" />
+        <Metric title="Ticket médio" value="R$ 78,40" note="R$ 6,20 acima da meta" color="green" icon="↗" path="M0,28 Q15,28 30,20 T60,25 T90,20 T100,22" />
+        <Metric title="Pedidos no mês" value="1.102" note="67% via WhatsApp" color="blue" icon="💬" path="M0,20 Q20,30 40,15 T80,25 T100,20" />
+        <Metric title="Tempo médio" value="28 min" note="4 min mais rápido" color="orange" icon="◷" path="M0,20 Q20,10 40,25 T70,15 T100,20" />
+      </section>
       <div className="reports-grid"><section className="panel revenue-chart"><PanelHeader title="Faturamento" subtitle="Últimos 30 dias" action="Este mês ⌄" /><div className="chart-value"><strong>R$ 86.420,00</strong><span>↗ 18,4%</span></div><div className="large-chart">{bars.map((height,index)=><div key={index}><i style={{height:`${height}%`}} className={index === 10 ? "peak" : ""}/><small>{index % 2 === 0 ? `${index + 1}/08` : ""}</small></div>)}</div></section><section className="panel channel-report"><PanelHeader title="Canais de venda" subtitle="Participação no faturamento" /><div className="donut"><div><strong>R$ 86k</strong><small>total</small></div></div><div className="channel-legend"><span><i className="wa"/><b>WhatsApp</b><strong>52%</strong></span><span><i className="site"/><b>Site</b><strong>28%</strong></span><span><i className="room"/><b>Salão</b><strong>20%</strong></span></div></section></div>
     </div>
   );
