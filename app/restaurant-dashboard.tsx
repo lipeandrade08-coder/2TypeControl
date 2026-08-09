@@ -234,7 +234,9 @@ const initialConversations: Conversation[] = [
   }
 ];
 
-const menuItems = [
+type MenuItem = { name: string; category: string; price: number; sold: number; available: boolean; };
+
+const initialMenuItems: MenuItem[] = [
   { name: "Pizza Margherita", category: "Pizzas", price: 58.9, sold: 34, available: true },
   { name: "Pizza Calabresa", category: "Pizzas", price: 62, sold: 29, available: true },
   { name: "Parmegiana da casa", category: "Pratos", price: 48.5, sold: 24, available: true },
@@ -335,6 +337,7 @@ export function playSound(type: 'pop' | 'ding' | 'success') {
 export function RestaurantDashboard() {
   const [activeView, setActiveView] = useState<View>("Visão geral");
   const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const feeInputRef = useRef<HTMLInputElement>(null);
   const toastTimerRef = useRef<number | undefined>(undefined);
@@ -694,7 +697,7 @@ export function RestaurantDashboard() {
             onWaitersUpdate={setWaiters}
           />
         )}
-        {activeView === "Cardápio" && <MenuView onNotify={notify} />}
+        {activeView === "Cardápio" && <MenuView menuItems={menuItems} setMenuItems={setMenuItems} onNotify={notify} />}
         {activeView === "Entregas" && <DeliveryView pendingFee={pendingFee} onOpenFee={() => setFeeModal(true)} onNotify={notify} />}
         {activeView === "Relatórios" && <ReportsView />}
         {activeView === "CRM" && <CrmView />}
@@ -1271,11 +1274,33 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
   );
 }
 
-function MenuView({ onNotify }: { onNotify: (message: string) => void }) {
-  const [availability, setAvailability] = useState<Record<string, boolean>>(Object.fromEntries(menuItems.map((item) => [item.name, item.available])));
+function MenuView({ menuItems, setMenuItems, onNotify }: { menuItems: MenuItem[]; setMenuItems: React.Dispatch<React.SetStateAction<MenuItem[]>>; onNotify: (message: string) => void }) {
   const [activeCategory, setActiveCategory] = useState("Todos");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [newItem, setNewItem] = useState<Partial<MenuItem>>({ category: "Pizzas", available: true });
+
   const filteredItems = activeCategory === "Todos" ? menuItems : menuItems.filter(i => i.category === activeCategory);
   const categories = ["Todos", "Pizzas", "Pratos", "Massas", "Sobremesas", "Bebidas"];
+
+  const handleAddItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newItem.name || !newItem.price) return;
+    const item: MenuItem = {
+      name: newItem.name,
+      category: newItem.category || "Pizzas",
+      price: Number(newItem.price),
+      sold: 0,
+      available: newItem.available ?? true,
+    };
+    setMenuItems([item, ...menuItems]);
+    setModalOpen(false);
+    setNewItem({ category: "Pizzas", available: true });
+    onNotify(`${item.name} adicionado ao cardápio com sucesso!`);
+  };
+
+  const toggleAvailability = (name: string) => {
+    setMenuItems(current => current.map(item => item.name === name ? { ...item, available: !item.available } : item));
+  };
 
   return (
     <div className="page-content">
@@ -1285,12 +1310,60 @@ function MenuView({ onNotify }: { onNotify: (message: string) => void }) {
             <button key={c} className={activeCategory === c ? "active" : ""} type="button" onClick={() => setActiveCategory(c)}>{c}</button>
           ))}
         </div>
-        <button className="primary-button" type="button" onClick={() => onNotify("Editor de novo item aberto.")}>+ Novo item</button>
+        <button className="primary-button" type="button" onClick={() => setModalOpen(true)}>+ Novo item</button>
       </div>
       <section className="panel menu-table-panel">
         <div className="menu-table-heading"><span>ITEM</span><span>CATEGORIA</span><span>PREÇO</span><span>VENDAS HOJE</span><span>DISPONÍVEL</span><span /></div>
-        {filteredItems.map((item, index) => <div className="menu-table-row" key={item.name}><span className={`food-thumb food-${index + 1}`}>{item.name.slice(0, 1)}</span><span><strong>{item.name}</strong><small>Sincronizado no site e WhatsApp</small></span><span>{item.category}</span><strong>{formatMoney(item.price)}</strong><span>{item.sold} unidades</span><Toggle enabled={availability[item.name]} onToggle={() => setAvailability((current) => ({ ...current, [item.name]: !current[item.name] }))} /><button type="button" onClick={() => onNotify(`Opções de: ${item.name}`)}>•••</button></div>)}
+        {filteredItems.map((item, index) => (
+          <div className="menu-table-row" key={item.name}>
+            <span className={`food-thumb food-${(index % 6) + 1}`}>{item.name.slice(0, 1)}</span>
+            <span><strong>{item.name}</strong><small>Sincronizado no site e WhatsApp</small></span>
+            <span>{item.category}</span>
+            <strong>{formatMoney(item.price)}</strong>
+            <span>{item.sold} unidades</span>
+            <Toggle enabled={item.available} onToggle={() => toggleAvailability(item.name)} />
+            <button type="button" onClick={() => onNotify(`Opções de: ${item.name}`)}>•••</button>
+          </div>
+        ))}
       </section>
+
+      {modalOpen && (
+        <div className="modal-backdrop">
+          <button className="modal-scrim" type="button" aria-label="Fechar" onClick={() => setModalOpen(false)} />
+          <section className="fee-modal" role="dialog" aria-modal="true" style={{ width: "100%", maxWidth: 400 }}>
+            <button className="modal-close" type="button" aria-label="Fechar" onClick={() => setModalOpen(false)}>×</button>
+            <p className="eyebrow orange">CARDÁPIO</p>
+            <h2>Novo Prato</h2>
+            <form onSubmit={handleAddItem} style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24, textAlign: "left" }}>
+              <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                <span>Nome do Prato</span>
+                <input required placeholder="Ex: Pizza Quatro Queijos" value={newItem.name || ""} onChange={e => setNewItem({...newItem, name: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                  <span>Categoria</span>
+                  <select value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }}>
+                    <option value="Pizzas">Pizzas</option>
+                    <option value="Pratos">Pratos</option>
+                    <option value="Massas">Massas</option>
+                    <option value="Sobremesas">Sobremesas</option>
+                    <option value="Bebidas">Bebidas</option>
+                  </select>
+                </label>
+                <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                  <span>Preço (R$)</span>
+                  <input required type="number" step="0.01" min="0" placeholder="0.00" value={newItem.price || ""} onChange={e => setNewItem({...newItem, price: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+                </label>
+              </div>
+              <label className="fee-field" style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
+                <input type="checkbox" checked={newItem.available} onChange={e => setNewItem({...newItem, available: e.target.checked})} />
+                <span style={{ fontSize: "14px", color: "white" }}>Disponível imediatamente</span>
+              </label>
+              <button className="primary-button wide" type="submit" style={{ marginTop: 8 }}>Adicionar ao Cardápio</button>
+            </form>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
@@ -1313,17 +1386,211 @@ function DeliveryView({ pendingFee, onOpenFee, onNotify }: { pendingFee?: Order;
   );
 }
 
+type Expense = {
+  id: string;
+  description: string;
+  category: "Ingredientes" | "Funcionários" | "Contas" | "Manutenção" | "Outros";
+  date: string;
+  amount: number;
+  status: "Pago" | "Pendente";
+};
+
+const initialExpenses: Expense[] = [
+  { id: "e1", description: "Hortifruti da Semana", category: "Ingredientes", date: "08/08", amount: 1240.50, status: "Pago" },
+  { id: "e2", description: "Conta de Luz", category: "Contas", date: "10/08", amount: 890.00, status: "Pendente" },
+  { id: "e3", description: "Conserto Geladeira", category: "Manutenção", date: "05/08", amount: 450.00, status: "Pago" },
+  { id: "e4", description: "Pagamento Garçons", category: "Funcionários", date: "05/08", amount: 3200.00, status: "Pago" },
+];
+
 function ReportsView() {
   const bars = [38, 44, 52, 46, 68, 74, 82, 58, 63, 71, 88, 76];
+  
+  const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  const [expenseModal, setExpenseModal] = useState(false);
+  const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: "Ingredientes", status: "Pago" });
+
+  const totalRevenue = 86420;
+  const baseExpenses = 32540; 
+  const currentTotalExpenses = baseExpenses + expenses.reduce((acc, exp) => acc + exp.amount, 0);
+  const netIncome = totalRevenue - currentTotalExpenses;
+
+  const expenseBreakdown = {
+    "Ingredientes": 12540 + expenses.filter(e => e.category === "Ingredientes").reduce((acc, e) => acc + e.amount, 0),
+    "Funcionários": 15000 + expenses.filter(e => e.category === "Funcionários").reduce((acc, e) => acc + e.amount, 0),
+    "Contas Fixas": 3500 + expenses.filter(e => e.category === "Contas").reduce((acc, e) => acc + e.amount, 0),
+    "Manutenção": 500 + expenses.filter(e => e.category === "Manutenção").reduce((acc, e) => acc + e.amount, 0),
+    "Outros": 1000 + expenses.filter(e => e.category === "Outros").reduce((acc, e) => acc + e.amount, 0),
+  };
+
+  const handleAddExpense = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newExpense.description || !newExpense.amount || !newExpense.date) return;
+    const exp: Expense = {
+      id: Math.random().toString(),
+      description: newExpense.description,
+      category: newExpense.category as Expense["category"],
+      date: newExpense.date,
+      amount: Number(newExpense.amount),
+      status: newExpense.status as Expense["status"],
+    };
+    setExpenses([exp, ...expenses]);
+    setExpenseModal(false);
+    setNewExpense({ category: "Ingredientes", status: "Pago" });
+  };
+
   return (
     <div className="page-content reports-page">
+      <div className="crm-header-section" style={{ padding: "0 0 24px" }}>
+        <div className="crm-header-titles">
+          <h1>Relatórios & <span>Financeiro</span></h1>
+          <p>Visão geral de faturamento, canais de venda e controle de fluxo de caixa.</p>
+        </div>
+        <div className="crm-header-actions">
+          <button className="ghost-button"><Icon name="relatorios" /> Exportar Relatório</button>
+          <button className="primary-button" onClick={() => setExpenseModal(true)}><Icon name="pedidos" /> Lançar Despesa</button>
+        </div>
+      </div>
+
       <section className="metric-grid">
-        <Metric title="Faturamento no mês" value="R$ 86.420" note="18,4% acima de julho" color="purple" icon="🛍️" path="M0,25 Q10,15 20,22 T40,20 T60,28 T80,24 T100,10" />
-        <Metric title="Ticket médio" value="R$ 78,40" note="R$ 6,20 acima da meta" color="green" icon="↗" path="M0,28 Q15,28 30,20 T60,25 T90,20 T100,22" />
-        <Metric title="Pedidos no mês" value="1.102" note="67% via WhatsApp" color="blue" icon="💬" path="M0,20 Q20,30 40,15 T80,25 T100,20" />
-        <Metric title="Tempo médio" value="28 min" note="4 min mais rápido" color="orange" icon="◷" path="M0,20 Q20,10 40,25 T70,15 T100,20" />
+        <Metric title="Faturamento no mês" value={formatMoney(totalRevenue)} note="18,4% acima de julho" color="purple" icon="🛍️" path="M0,25 Q10,15 20,22 T40,20 T60,28 T80,24 T100,10" />
+        <Metric title="Despesas (Saídas)" value={formatMoney(currentTotalExpenses)} note="4,2% abaixo de julho" color="orange" icon="📉" path="M0,28 Q15,28 30,20 T60,25 T90,20 T100,22" />
+        <Metric title="Saldo Líquido" value={formatMoney(netIncome)} note="Margem de 60,3%" color="green" icon="💰" path="M0,20 Q20,30 40,15 T80,25 T100,20" />
+        <Metric title="Ticket médio" value="R$ 78,40" note="R$ 6,20 acima da meta" color="blue" icon="↗" path="M0,20 Q20,10 40,25 T70,15 T100,20" />
       </section>
-      <div className="reports-grid"><section className="panel revenue-chart"><PanelHeader title="Faturamento" subtitle="Últimos 30 dias" action="Este mês ⌄" /><div className="chart-value"><strong>R$ 86.420,00</strong><span>↗ 18,4%</span></div><div className="large-chart">{bars.map((height,index)=><div key={index}><i style={{height:`${height}%`}} className={index === 10 ? "peak" : ""}/><small>{index % 2 === 0 ? `${index + 1}/08` : ""}</small></div>)}</div></section><section className="panel channel-report"><PanelHeader title="Canais de venda" subtitle="Participação no faturamento" /><div className="donut"><div><strong>R$ 86k</strong><small>total</small></div></div><div className="channel-legend"><span><i className="wa"/><b>WhatsApp</b><strong>52%</strong></span><span><i className="site"/><b>Site</b><strong>28%</strong></span><span><i className="room"/><b>Salão</b><strong>20%</strong></span></div></section></div>
+
+      <div className="reports-grid">
+        <section className="panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+          <PanelHeader title="Detalhamento de Gastos" subtitle="Distribuição por categoria" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {Object.entries(expenseBreakdown).map(([category, amount]) => {
+              const percentage = Math.round((amount / currentTotalExpenses) * 100);
+              return (
+                <div key={category} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "white" }}>
+                    <span>{category}</span>
+                    <strong style={{ color: "var(--orange)" }}>{formatMoney(amount)} ({percentage}%)</strong>
+                  </div>
+                  <div style={{ height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 4, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${percentage}%`, background: "var(--orange)" }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+        
+        <section className="panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+          <PanelHeader title="Demonstrativo de Lucro" subtitle="Resultado Líquido do Período" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
+              <span style={{ color: "var(--muted)" }}>Faturamento Bruto</span>
+              <strong style={{ color: "var(--green)" }}>{formatMoney(totalRevenue)}</strong>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
+              <span style={{ color: "var(--muted)" }}>Custos e Despesas</span>
+              <strong style={{ color: "var(--orange)" }}>- {formatMoney(currentTotalExpenses)}</strong>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 4 }}>
+              <span style={{ color: "white", fontWeight: 600 }}>Lucro Líquido Real</span>
+              <strong style={{ color: netIncome > 0 ? "var(--green)" : "var(--orange)", fontSize: "18px" }}>
+                {formatMoney(netIncome)}
+              </strong>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 4 }}>
+              <span style={{ color: "var(--muted)", fontSize: "11px" }}>Margem de Lucro</span>
+              <strong style={{ color: "white", fontSize: "11px" }}>{((netIncome / totalRevenue) * 100).toFixed(1)}%</strong>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div className="spreadsheet-container" style={{ marginTop: 24 }}>
+        <div className="spreadsheet-toolbar" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: 16 }}>
+          <PanelHeader title="Controle de Despesas" subtitle="Últimos lançamentos de fluxo de caixa" />
+        </div>
+        <div className="spreadsheet-table-wrapper">
+          <table className="spreadsheet-table">
+            <thead>
+              <tr>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Data</th>
+                <th>Valor</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {expenses.map(exp => (
+                <tr key={exp.id} className="spreadsheet-row">
+                  <td><strong>{exp.description}</strong></td>
+                  <td>
+                    <span className={`crm-badge ${
+                      exp.category === "Ingredientes" ? "recurrent" :
+                      exp.category === "Funcionários" ? "vip" :
+                      exp.category === "Contas" ? "risk" : "new"
+                    }`}>{exp.category}</span>
+                  </td>
+                  <td className="client-date">{exp.date}</td>
+                  <td className="client-money" style={{ color: "var(--orange)" }}>- {formatMoney(exp.amount)}</td>
+                  <td>
+                    <span className={`crm-badge ${exp.status === "Pago" ? "new" : "risk"}`}>{exp.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {expenseModal && (
+        <div className="modal-backdrop">
+          <button className="modal-scrim" type="button" aria-label="Fechar" onClick={() => setExpenseModal(false)} />
+          <section className="fee-modal" role="dialog" aria-modal="true" style={{ width: "100%", maxWidth: 480 }}>
+            <button className="modal-close" type="button" aria-label="Fechar" onClick={() => setExpenseModal(false)}>×</button>
+            <p className="eyebrow orange">FLUXO DE CAIXA</p>
+            <h2>Lançar Nova Despesa</h2>
+            <form onSubmit={handleAddExpense} style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24, textAlign: "left" }}>
+              <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                <span>Descrição da Despesa</span>
+                <input required placeholder="Ex: Compra de Hortifruti" value={newExpense.description || ""} onChange={e => setNewExpense({...newExpense, description: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+              </label>
+              
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                  <span>Categoria</span>
+                  <select value={newExpense.category} onChange={e => setNewExpense({...newExpense, category: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }}>
+                    <option value="Ingredientes">Ingredientes</option>
+                    <option value="Funcionários">Funcionários</option>
+                    <option value="Contas">Contas Fixas</option>
+                    <option value="Manutenção">Manutenção</option>
+                    <option value="Outros">Outros</option>
+                  </select>
+                </label>
+                <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                  <span>Data</span>
+                  <input required type="text" placeholder="DD/MM/AAAA" value={newExpense.date || ""} onChange={e => setNewExpense({...newExpense, date: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+                </label>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                  <span>Valor (R$)</span>
+                  <input required type="number" step="0.01" min="0" placeholder="0.00" value={newExpense.amount || ""} onChange={e => setNewExpense({...newExpense, amount: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+                </label>
+                <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                  <span>Status</span>
+                  <select value={newExpense.status} onChange={e => setNewExpense({...newExpense, status: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }}>
+                    <option value="Pago">Pago</option>
+                    <option value="Pendente">Pendente</option>
+                  </select>
+                </label>
+              </div>
+
+              <button className="primary-button wide" type="submit" style={{ marginTop: 8 }}>Registrar Despesa</button>
+            </form>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
