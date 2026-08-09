@@ -11,7 +11,8 @@ type View =
   | "Cardápio"
   | "Entregas"
   | "Relatórios"
-  | "CRM";
+  | "CRM"
+  | "Integrações";
 
 type OrderStatus = "Novo" | "Confirmado" | "Em preparo" | "Pronto" | "Saiu";
 
@@ -26,6 +27,13 @@ type Order = {
   feePending?: boolean;
 };
 
+type Waiter = {
+  id: string;
+  name: string;
+  initials: string;
+  color: string;
+};
+
 type Table = {
   number: number;
   seats: number;
@@ -34,6 +42,11 @@ type Table = {
   total: number;
   time?: string;
   items: { name: string; quantity: number; price: number }[];
+  waiterId?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
 };
 
 const formatMoney = (value: number) =>
@@ -51,6 +64,7 @@ const navigation: { label: View; icon: string; badge?: string; group?: string }[
   { label: "Entregas", icon: "entregas" },
   { label: "Relatórios", icon: "relatorios" },
   { label: "CRM", icon: "crm" },
+  { label: "Integrações", icon: "integracoes", group: "CONFIGURAÇÕES" },
 ];
 
 const initialOrders: Order[] = [
@@ -109,6 +123,11 @@ const initialOrders: Order[] = [
     time: "há 31 min",
     status: "Saiu",
   },
+];
+
+const initialWaiters: Waiter[] = [
+  { id: "w1", name: "Carlos Silva", initials: "CS", color: "var(--orange, #FF5733)" },
+  { id: "w2", name: "Ana Paula", initials: "AP", color: "#33FF57" },
 ];
 
 const initialTables: Table[] = [
@@ -183,12 +202,36 @@ const initialTables: Table[] = [
   { number: 12, seats: 8, status: "Livre", guests: 0, total: 0, items: [] },
 ];
 
-const conversations = [
-  { name: "Camila Rocha", initials: "CR", message: "Meu pedido já saiu?", time: "10:42", unread: 2, active: true },
-  { name: "Lucas Mendes", initials: "LM", message: "Perfeito, obrigado!", time: "10:36", unread: 0 },
-  { name: "Beatriz Lima", initials: "BL", message: "Vocês têm opção sem lactose?", time: "10:31", unread: 1 },
-  { name: "Daniel Souza", initials: "DS", message: "Quero pedir o combo família", time: "10:22", unread: 1 },
-  { name: "Marcos Silva", initials: "MS", message: "Qual o tempo de entrega?", time: "10:18", unread: 1 },
+type ChatMessage = { side: "customer" | "ai" | "operator"; text: string; time: string };
+type Conversation = { id: string; name: string; initials: string; message: string; time: string; unread: number; isVip?: boolean; history: ChatMessage[]; suggestion?: string };
+
+const initialConversations: Conversation[] = [
+  { 
+    id: "c1", name: "Camila Rocha", initials: "CR", message: "Ótimo, muito obrigada!", time: "10:42", unread: 2, isVip: true,
+    history: [
+      { side: "customer", text: "Oi! Fiz o pedido #1046. Meu pedido já saiu para entrega?", time: "10:41" },
+      { side: "ai", text: "Oi, Camila! Seu pedido #1046 saiu às 10:36 e chega em cerca de 18 min. 😊", time: "10:42" },
+      { side: "customer", text: "Ótimo, muito obrigada!", time: "10:42" }
+    ],
+    suggestion: "Imagina, Camila! Qualquer dúvida estamos à disposição. Bom apetite! 🍕"
+  },
+  { 
+    id: "c2", name: "Lucas Mendes", initials: "LM", message: "Perfeito, obrigado!", time: "10:36", unread: 0,
+    history: [
+      { side: "customer", text: "Boa noite, vocês entregam no bairro Jardins?", time: "10:30" },
+      { side: "ai", text: "Boa noite, Lucas! Sim, entregamos no Jardins. A taxa fica em R$ 7,90 e o tempo médio é 40 min.", time: "10:31" },
+      { side: "customer", text: "Vou pedir pelo iFood então, valeu.", time: "10:35" },
+      { side: "ai", text: "Combinado! Aguardamos seu pedido.", time: "10:35" },
+      { side: "customer", text: "Perfeito, obrigado!", time: "10:36" }
+    ],
+  },
+  { 
+    id: "c3", name: "Beatriz Lima", initials: "BL", message: "Vocês têm opção sem lactose?", time: "10:31", unread: 1,
+    history: [
+      { side: "customer", text: "Boa noite! Vocês têm opção sem lactose nas pizzas?", time: "10:31" },
+    ],
+    suggestion: "Oi Beatriz! Temos sim. Nossas pizzas podem ser feitas com queijo muçarela zero lactose. Qual sabor você prefere?"
+  }
 ];
 
 const menuItems = [
@@ -210,11 +253,12 @@ function AppIcon({ name }: { name: string }) {
     case 'entregas': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h11v10H3z"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>;
     case 'crm': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="7" r="2.5"/><path d="M3 20c.5-4 2.6-6 5-6s4.5 2 5 6"/><path d="M14 13c3.5 0 5.5 2 6 5"/></svg>;
     case 'relatorios': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20V10M10 20V5M16 20v-8M22 20V3"/><path d="M3 20h20"/></svg>;
+    case 'integracoes': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="14" width="8" height="8" rx="2" ry="2"/><rect x="14" y="2" width="8" height="8" rx="2" ry="2"/><path d="M6 14V6h8"/></svg>;
     default: return <span>{name}</span>;
   }
 }
 
-const Icon = ({ children }: { children: string }) => <span className="icon-box" aria-hidden="true"><AppIcon name={children} /></span>;
+const Icon = ({ children, name }: { children?: string, name?: string }) => <span className="icon-box" aria-hidden="true"><AppIcon name={children || name || ""} /></span>;
 
 function isOrder(value: unknown): value is Order {
   if (typeof value !== "object" || value === null) return false;
@@ -236,6 +280,56 @@ function isOrder(value: unknown): value is Order {
       order.status === "Saiu") &&
     (order.feePending === undefined || typeof order.feePending === "boolean")
   );
+}
+
+let isMuted = false;
+export function toggleMute() { isMuted = !isMuted; return isMuted; }
+const audioContextRef: { current: AudioContext | null } = { current: null };
+
+export function playSound(type: 'pop' | 'ding' | 'success') {
+  if (isMuted || typeof window === 'undefined') return;
+  if (!audioContextRef.current) {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (AudioContextClass) {
+       audioContextRef.current = new AudioContextClass();
+    }
+  }
+  const ctx = audioContextRef.current;
+  if (!ctx) return;
+  if (ctx.state === 'suspended') {
+    ctx.resume();
+  }
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  if (type === 'pop') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.05);
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+  } else if (type === 'ding') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
+  } else if (type === 'success') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
+  }
 }
 
 export function RestaurantDashboard() {
@@ -282,7 +376,9 @@ export function RestaurantDashboard() {
       window.clearInterval(interval);
     };
   }, []);
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [tables, setTables] = useState<Table[]>(initialTables);
+  const [waiters, setWaiters] = useState<Waiter[]>(initialWaiters);
   const [selectedTable, setSelectedTable] = useState(2);
   const [feeModal, setFeeModal] = useState(false);
   const [addItemModal, setAddItemModal] = useState(false);
@@ -295,6 +391,7 @@ export function RestaurantDashboard() {
   const [aiEnabled, setAiEnabled] = useState(true);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [toast, setToast] = useState("");
+  const [muted, setMuted] = useState(isMuted);
   const [orderFilter, setOrderFilter] = useState("Todos");
   const [search, setSearch] = useState("");
 
@@ -363,6 +460,7 @@ export function RestaurantDashboard() {
       window.clearTimeout(toastTimerRef.current);
     }
     setToast(message);
+    playSound('ding');
     toastTimerRef.current = window.setTimeout(() => setToast(""), 2800);
   };
 
@@ -382,13 +480,18 @@ export function RestaurantDashboard() {
 
   const advanceOrder = (id: number) => {
     const flow: OrderStatus[] = ["Novo", "Confirmado", "Em preparo", "Pronto", "Saiu"];
+    let justFinished = false;
     setOrders((current) =>
       current.map((order) => {
         if (order.id !== id || order.feePending) return order;
-        const next = flow[Math.min(flow.indexOf(order.status) + 1, flow.length - 1)];
-        return { ...order, status: next };
+        const currentIdx = flow.indexOf(order.status);
+        const nextIdx = Math.min(currentIdx + 1, flow.length - 1);
+        if (nextIdx === flow.length - 1 && currentIdx !== flow.length - 1) justFinished = true;
+        return { ...order, status: flow[nextIdx] };
       }),
     );
+    if (justFinished) playSound('success');
+    else playSound('pop');
     notify("Etapa do pedido atualizada.");
   };
 
@@ -451,6 +554,7 @@ export function RestaurantDashboard() {
       ),
     );
     setCheckoutModal(false);
+    playSound('success');
     notify(`Mesa ${String(selectedTable).padStart(2, "0")} paga via ${paymentMethod || "Dinheiro"} e liberada.`);
   };
 
@@ -497,6 +601,21 @@ export function RestaurantDashboard() {
         </nav>
 
         <div className="sidebar-bottom">
+          <button
+            type="button"
+            className="nav-item"
+            style={{ marginBottom: "14px", minHeight: "36px", padding: "6px 10px" }}
+            onClick={() => {
+              const newState = toggleMute();
+              setMuted(newState);
+              if (!newState) playSound('pop');
+            }}
+            title={muted ? "Ligar sons" : "Desligar sons"}
+          >
+            <span style={{ fontSize: "14px" }}>{muted ? "🔇" : "🔊"}</span>
+            <span style={{ flex: 1, color: "var(--muted)", textAlign: "left" }}>{muted ? "Sons mutados" : "Sons ativados"}</span>
+          </button>
+          
           <button className="integration-card" type="button" onClick={() => notify("3 integrações ativas e sincronizadas.")}>
             <span className="integration-icon">⌁</span>
             <span><strong>Integrações</strong><small>3 de 4 conectadas</small></span>
@@ -560,17 +679,26 @@ export function RestaurantDashboard() {
         {activeView === "Salão" && (
           <DiningView
             tables={tables}
+            waiters={waiters}
             selected={table}
             onSelect={setSelectedTable}
             onAddItem={openAddItemModal}
             onClose={openCheckoutModal}
             onNotify={notify}
+            onUpdateTable={(t) => setTables(current => current.map(c => c.number === t.number ? t : c))}
+            onAddTable={() => setTables(current => [...current, { number: current.length > 0 ? Math.max(...current.map(c => c.number)) + 1 : 1, seats: 4, status: "Livre", guests: 0, total: 0, items: [], x: 10, y: 10, width: 104, height: 76 }])}
+            onRemoveTable={(num) => {
+              setTables(current => current.filter(c => c.number !== num));
+              if (selectedTable === num) setSelectedTable(1);
+            }}
+            onWaitersUpdate={setWaiters}
           />
         )}
         {activeView === "Cardápio" && <MenuView onNotify={notify} />}
         {activeView === "Entregas" && <DeliveryView pendingFee={pendingFee} onOpenFee={() => setFeeModal(true)} onNotify={notify} />}
         {activeView === "Relatórios" && <ReportsView />}
         {activeView === "CRM" && <CrmView />}
+        {activeView === "Integrações" && <IntegrationsView />}
       </main>
 
       {feeModal && pendingFee && (
@@ -833,93 +961,312 @@ function OrdersView({ orders, filter, onFilter, onAdvance, onOpenFee, onNotify }
 }
 
 function WhatsAppView({ aiEnabled, onToggleAi, onNotify }: { aiEnabled: boolean; onToggleAi: () => void; onNotify: (message: string) => void }) {
+  const [conversations, setConversations] = useState(initialConversations);
+  const [activeChatId, setActiveChatId] = useState("c1");
   const [message, setMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [messages, setMessages] = useState([
-    { side: "customer", text: "Oi! Fiz o pedido #1046. Meu pedido já saiu para entrega?", time: "10:41" },
-    { side: "ai", text: "Oi, Camila! Seu pedido #1046 saiu às 10:36 e chega em cerca de 18 min. 😊", time: "10:42" },
-    { side: "customer", text: "Ótimo, muito obrigada!", time: "10:42" },
-  ]);
+
+  const activeChat = conversations.find(c => c.id === activeChatId) || conversations[0];
+
+  const selectChat = (id: string) => {
+    setActiveChatId(id);
+    setConversations(current => current.map(c => c.id === id ? { ...c, unread: 0 } : c));
+    setMessage("");
+    playSound('pop');
+  };
+
   const send = () => {
     if (!message.trim()) return;
-    setMessages((current) => [...current, { side: "operator", text: message.trim(), time: "agora" }]);
+    setConversations(current => current.map(c => {
+      if (c.id === activeChatId) {
+        return { ...c, history: [...c.history, { side: "operator", text: message.trim(), time: "agora" }] };
+      }
+      return c;
+    }));
     setMessage("");
-    onNotify("Mensagem enviada pelo WhatsApp.");
+    playSound('pop');
     setTimeout(() => {
       scrollRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   };
+
+  const useSuggestion = () => {
+    if (activeChat.suggestion) {
+      setMessage(activeChat.suggestion);
+      playSound('pop');
+      onNotify("Sugestão da IA carregada. Pode editar e enviar.");
+    }
+  };
+
   return (
     <div className="page-content whatsapp-workspace">
       <section className="conversation-list panel">
-        <div className="conversation-heading"><div><h2>Conversas</h2><span>5 aguardando</span></div><button type="button">⌕</button></div>
+        <div className="conversation-heading"><div><h2>Conversas</h2><span>{conversations.reduce((acc, c) => acc + c.unread, 0)} aguardando</span></div><button type="button">⌕</button></div>
         {conversations.map((conversation) => (
-          <button className={`conversation-item ${conversation.active ? "active" : ""}`} key={conversation.name} type="button">
-            <span className="avatar">{conversation.initials}</span>
-            <span><strong>{conversation.name}</strong><small>{conversation.message}</small></span>
+          <button className={`conversation-item ${activeChatId === conversation.id ? "active" : ""}`} key={conversation.id} type="button" onClick={() => selectChat(conversation.id)}>
+            <span className={`avatar ${conversation.isVip ? "coral" : ""}`}>{conversation.initials}</span>
+            <span><strong>{conversation.name}</strong><small>{conversation.history[conversation.history.length - 1]?.text}</small></span>
             <span><time>{conversation.time}</time>{conversation.unread > 0 && <b>{conversation.unread}</b>}</span>
           </button>
         ))}
       </section>
       <section className="chat-panel panel">
-        <header className="chat-header"><span className="avatar coral">CR</span><span><strong>Camila Rocha</strong><small><i /> WhatsApp • cliente desde 2024</small></span><button type="button">•••</button></header>
+        <header className="chat-header"><span className={`avatar ${activeChat.isVip ? "coral" : ""}`}>{activeChat.initials}</span><span><strong>{activeChat.name}</strong><small><i /> WhatsApp • cliente ativo</small></span><button type="button">•••</button></header>
         <div className="chat-body">
           <div className="date-divider"><span>Hoje</span></div>
-          {messages.map((item, index) => <div key={index} className={`bubble ${item.side}`}><span>{item.side === "ai" && "✦ "}{item.text}</span><small>{item.time}{item.side !== "customer" && "  ✓✓"}</small></div>)}
-          {aiEnabled && <div className="ai-thinking"><span>✦</span> A IA está acompanhando esta conversa</div>}
+          {activeChat.history.map((item, index) => <div key={index} className={`bubble ${item.side}`}><span>{item.side === "ai" && "✦ "}{item.text}</span><small>{item.time}{item.side !== "customer" && <span className="check-read">✓✓</span>}</small></div>)}
+          {aiEnabled && activeChat.unread > 0 && <div className="ai-thinking"><span>✦</span> A IA está acompanhando esta conversa</div>}
           <div ref={scrollRef} />
         </div>
-        <div className="composer"><button type="button" aria-label="Adicionar anexo" onClick={() => onNotify("Menu de anexos aberto")}>＋</button><input aria-label="Mensagem para Camila Rocha" value={message} onChange={(event) => setMessage(event.target.value)} onKeyDown={(event) => event.key === "Enter" && send()} placeholder="Digite uma mensagem..." /><button className="send-button" type="button" aria-label="Enviar mensagem" onClick={send}>➜</button></div>
+        <div className="composer">
+          <button type="button" aria-label="Adicionar anexo" onClick={() => onNotify("Menu de anexos aberto")}>＋</button>
+          <input aria-label={`Mensagem para ${activeChat.name}`} value={message} onChange={(event) => setMessage(event.target.value)} onKeyDown={(event) => event.key === "Enter" && send()} placeholder="Digite uma mensagem..." />
+          <button className="send-button" type="button" aria-label="Enviar mensagem" onClick={send}>➜</button>
+        </div>
       </section>
       <aside className="chat-insights panel">
         <div className="insights-header"><span className="spark">✦</span><span><strong>Copiloto IA</strong><small>Contexto da conversa</small></span><Toggle enabled={aiEnabled} onToggle={onToggleAi} /></div>
-        <div className="customer-summary"><span className="avatar coral large">CR</span><h3>Camila Rocha</h3><p>7 pedidos • ticket médio R$ 73,40</p></div>
-        <div className="insight-block"><small>PEDIDO ATUAL</small><div className="linked-order"><span><strong>#1046</strong><small>Saiu para entrega às 10:36</small></span><StatusBadge status="Saiu" /></div></div>
-        <div className="insight-block"><small>RESUMO DA IA</small><p>Cliente pediu atualização da entrega. O pedido já está com o entregador e dentro do prazo.</p></div>
-        <div className="insight-block"><small>PRÓXIMA AÇÃO</small><button className="suggestion" type="button" onClick={() => onNotify("Resposta sugerida copiada.")}><span>✦</span><p>Agradecer e avisar que o entregador está a caminho.</p><b>Usar resposta →</b></button></div>
+        <div className="customer-summary"><span className={`avatar large ${activeChat.isVip ? "coral" : ""}`}>{activeChat.initials}</span><h3>{activeChat.name}</h3><p>{activeChat.isVip ? "7 pedidos • ticket médio R$ 73,40" : "1 pedido • cliente novo"}</p></div>
+        
+        {activeChatId === "c1" && (
+          <div className="insight-block"><small>PEDIDO ATUAL</small><div className="linked-order"><span><strong>#1046</strong><small>Saiu para entrega às 10:36</small></span><StatusBadge status="Saiu" /></div></div>
+        )}
+        
+        <div className="insight-block"><small>RESUMO DA IA</small><p>{activeChat.suggestion ? "O cliente fez uma pergunta. Sugiro uma resposta educada e rápida." : "Conversa resolvida ou aguardando cliente."}</p></div>
+        
+        {activeChat.suggestion && (
+          <div className="insight-block"><small>PRÓXIMA AÇÃO</small><button className="suggestion" type="button" onClick={useSuggestion}><span>✦</span><p>{activeChat.suggestion}</p><b>Usar resposta →</b></button></div>
+        )}
+        
         <button className="ghost-button wide" type="button" onClick={() => onNotify("Atendimento assumido pelo operador.")}>Assumir atendimento</button>
       </aside>
     </div>
   );
 }
 
-function DiningView({ tables, selected, onSelect, onAddItem, onClose, onNotify }: { tables: Table[]; selected: Table; onSelect: (number: number) => void; onAddItem: () => void; onClose: () => void; onNotify: (message: string) => void }) {
+function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, onNotify, onUpdateTable, onAddTable, onRemoveTable, onWaitersUpdate }: { tables: Table[]; waiters: Waiter[]; selected: Table; onSelect: (number: number) => void; onAddItem: () => void; onClose: () => void; onNotify: (message: string) => void; onUpdateTable: (t: Table) => void; onAddTable: () => void; onRemoveTable: (num: number) => void; onWaitersUpdate: (w: Waiter[]) => void }) {
   const [activeArea, setActiveArea] = useState("Salão principal");
+  const [isEditingMap, setIsEditingMap] = useState(false);
+  const [draggingTable, setDraggingTable] = useState<number | null>(null);
+  const [showWaiterModal, setShowWaiterModal] = useState(false);
+  const [editingTableNumber, setEditingTableNumber] = useState<number | null>(null);
+  
+  // Waiter assignment modal
+  const [assignWaiterTable, setAssignWaiterTable] = useState<number | null>(null);
+
+  // New waiter form
+  const [newWaiterName, setNewWaiterName] = useState("");
+  const [newWaiterColor, setNewWaiterColor] = useState("purple");
+
+  const getOccupancyText = (status: string) => {
+    if (status === "Livre") return "Livre";
+    if (status === "Reservada") return "Reservada";
+    if (status === "Conta") return "Fechando conta";
+    return "Há 45 min";
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isEditingMap || draggingTable === null) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const table = tables.find(t => t.number === draggingTable);
+    if (table) {
+      onUpdateTable({ ...table, x, y });
+    }
+  };
+
+  const handlePointerUp = () => {
+    if (draggingTable !== null) {
+      setDraggingTable(null);
+      onNotify("Posição salva.");
+    }
+  };
+
+  const handleAddWaiter = () => {
+    if (!newWaiterName.trim()) return;
+    const initials = newWaiterName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+    const newWaiter = { id: `w${Date.now()}`, name: newWaiterName, initials, color: newWaiterColor };
+    onWaitersUpdate([...waiters, newWaiter]);
+    setNewWaiterName("");
+    onNotify("Garçom adicionado.");
+  };
+
+  const selectedWaiter = waiters.find(w => w.id === selected.waiterId);
+
   return (
     <div className="page-content dining-layout">
+      {/* MAPA */}
       <section className="floor-panel panel">
         <div className="section-toolbar compact">
           <div className="filter-tabs">
-            <button className={activeArea === "Salão principal" ? "active" : ""} onClick={() => setActiveArea("Salão principal")} type="button">Salão principal</button>
-            <button className={activeArea === "Varanda" ? "active" : ""} onClick={() => { setActiveArea("Varanda"); onNotify("Mapa da Varanda carregado."); }} type="button">Varanda</button>
+            <button className={activeArea === "Salão principal" ? "active" : ""} onClick={() => { setActiveArea("Salão principal"); playSound('pop'); }} type="button">Salão principal</button>
+            <button className={activeArea === "Varanda" ? "active" : ""} onClick={() => { setActiveArea("Varanda"); playSound('pop'); onNotify("Mapa da Varanda carregado."); }} type="button">Varanda</button>
           </div>
-          <button className="ghost-button" type="button" onClick={() => onNotify("Editor de mapa ativado.")}>Editar mapa</button>
+          <div style={{ display: "flex", gap: "10px" }}>
+            {isEditingMap ? (
+              <>
+                <button className="ghost-button" type="button" onClick={() => { playSound('pop'); onAddTable(); }}>+ Nova Mesa</button>
+                <button className="primary-button" type="button" onClick={() => { setIsEditingMap(false); onNotify("Edições salvas."); }}>Salvar Mapa</button>
+              </>
+            ) : (
+              <>
+                <button className="ghost-button" type="button" onClick={() => setShowWaiterModal(true)}>Gerenciar Equipe</button>
+                <button className="ghost-button" type="button" onClick={() => setIsEditingMap(true)}>Editar mapa</button>
+              </>
+            )}
+          </div>
         </div>
         <div className="floor-info"><span><strong>{tables.filter((table) => table.status === "Livre").length}</strong> livres</span><span><strong>{tables.filter((table) => table.status === "Ocupada").length}</strong> ocupadas</span><span><strong>{tables.filter((table) => table.status === "Conta").length}</strong> pediu conta</span><span><strong>{tables.filter((table) => table.status === "Reservada").length}</strong> reservadas</span></div>
-        <div className="floor-map">
+        <div className={`floor-map ${isEditingMap ? "editing" : ""}`} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}>
           <div className="bar-counter">BAR / BALCÃO</div>
-          {tables.map((table) => (
-            <button className={`floor-table table-${table.number} ${table.status.toLowerCase()} ${selected.number === table.number ? "selected" : ""}`} type="button" key={table.number} onClick={() => onSelect(table.number)}>
-              <span>M{String(table.number).padStart(2, "0")}</span>
-              <small>{table.status === "Livre" ? `${table.seats} lugares` : table.status === "Reservada" ? table.time : formatMoney(table.total)}</small>
-              {table.guests > 0 && <b>{table.guests} pessoas</b>}
-            </button>
-          ))}
+          {tables.map((table) => {
+            const waiter = waiters.find(w => w.id === table.waiterId);
+            return (
+              <button 
+                className={`floor-table ${table.status.toLowerCase()} ${selected.number === table.number ? "selected" : ""}`} 
+                type="button" 
+                key={table.number} 
+                style={{ left: `${table.x}%`, top: `${table.y}%`, width: `${table.width}px`, height: `${table.height}px`, transform: "translate(-50%, -50%)", position: "absolute" }}
+                onPointerDown={(e) => {
+                  if (isEditingMap) {
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    setDraggingTable(table.number);
+                  }
+                }}
+                onClick={() => {
+                  if (isEditingMap && draggingTable === null) {
+                    setEditingTableNumber(table.number);
+                  } else if (!isEditingMap) {
+                    playSound('pop'); 
+                    onSelect(table.number); 
+                  }
+                }}
+              >
+                {waiter && !isEditingMap && <span style={{ position: "absolute", top: "-8px", right: "-8px", background: `var(--${waiter.color})`, color: "white", borderRadius: "50%", width: "20px", height: "20px", display: "grid", placeItems: "center", fontSize: "8px", fontWeight: "bold" }}>{waiter.initials}</span>}
+                <span>M{String(table.number).padStart(2, "0")}</span>
+                <small>{table.status === "Reservada" ? table.time : table.status === "Livre" ? `${table.seats} lugares` : getOccupancyText(table.status)}</small>
+                {table.guests > 0 && <b>{table.guests} pessoas</b>}
+                {isEditingMap && <div className="edit-overlay" style={{ position: "absolute", inset: 0, background: "rgba(229,109,53,0.3)", borderRadius: "inherit", zIndex: 20, display: "grid", placeItems: "center", opacity: draggingTable === table.number ? 1 : 0.4 }}><span style={{ color: "white", fontSize: "16px" }}>{draggingTable === table.number ? "✋" : "✏️"}</span></div>}
+              </button>
+            );
+          })}
           <div className="kitchen-marker">COZINHA</div>
         </div>
       </section>
+
+      {/* COMANDA */}
       <aside className="table-check panel">
-        <header><div><p className="eyebrow">COMANDA ABERTA</p><h2>Mesa {String(selected.number).padStart(2, "0")}</h2><span>{selected.guests || selected.seats} pessoas • {selected.time || "mesa livre"}</span></div><button type="button">•••</button></header>
-        <div className="waiter-row"><span className="avatar">RS</span><span><small>Garçom responsável</small><strong>Rafael Santos</strong></span><button type="button">Trocar</button></div>
+        <header><div><p className="eyebrow">COMANDA ABERTA</p><h2>Mesa {String(selected.number).padStart(2, "0")}</h2><span>{selected.guests || selected.seats} pessoas • {selected.status === "Livre" ? "mesa livre" : "em andamento"}</span></div><button type="button">•••</button></header>
+        <div className="waiter-row" style={{ position: "relative" }}>
+          {selectedWaiter ? (
+            <>
+              <span className={`avatar ${selectedWaiter.color}`}>{selectedWaiter.initials}</span>
+              <span><small>Garçom responsável</small><strong>{selectedWaiter.name}</strong></span>
+            </>
+          ) : (
+            <>
+              <span className="avatar" style={{ background: "transparent", border: "1px dashed #666" }}>?</span>
+              <span><small>Nenhum responsável</small><strong>Não atribuído</strong></span>
+            </>
+          )}
+          <button type="button" onClick={() => setAssignWaiterTable(assignWaiterTable === selected.number ? null : selected.number)}>Trocar</button>
+          
+          {/* Dropdown de Garçons */}
+          {assignWaiterTable === selected.number && (
+            <div className="dropdown-menu" style={{ position: "absolute", top: "100%", right: "20px", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: "10px", padding: "8px", zIndex: 100, width: "200px", boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}>
+              {waiters.map(w => (
+                <button key={w.id} type="button" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "8px", background: "transparent", border: "0", cursor: "pointer", borderRadius: "6px", textAlign: "left", color: "white" }} onClick={() => { onUpdateTable({ ...selected, waiterId: w.id }); setAssignWaiterTable(null); onNotify(`${w.name} atribuído à Mesa ${selected.number}`); }}>
+                  <span className={`avatar ${w.color}`} style={{ width: "24px", height: "24px", fontSize: "9px" }}>{w.initials}</span>
+                  <span style={{ fontSize: "11px", fontWeight: 600 }}>{w.name}</span>
+                </button>
+              ))}
+              <div style={{ height: "1px", background: "var(--line)", margin: "8px 0" }} />
+              <button type="button" style={{ width: "100%", padding: "8px", background: "transparent", border: "0", color: "var(--muted)", cursor: "pointer", fontSize: "10px", textAlign: "left" }} onClick={() => { onUpdateTable({ ...selected, waiterId: undefined }); setAssignWaiterTable(null); }}>Remover atribuição</button>
+            </div>
+          )}
+        </div>
         <div className="check-items">
           {selected.items.length > 0 ? selected.items.map((item, index) => (
             <div className="check-item" key={`${item.name}-${index}`}><b>{item.quantity}×</b><span><strong>{item.name}</strong><small>Observação padrão</small></span><strong>{formatMoney(item.price * item.quantity)}</strong></div>
           )) : <div className="empty-check"><span>◇</span><strong>Nenhum item lançado</strong><small>Adicione o primeiro item desta mesa.</small></div>}
         </div>
-        <button className="add-item-button" type="button" onClick={onAddItem}>＋ Adicionar item</button>
+        <button className="add-item-button" type="button" onClick={() => { playSound('pop'); onAddItem(); }}>＋ Adicionar item</button>
         <div className="check-total"><span><small>Subtotal</small><strong>{formatMoney(selected.total)}</strong></span><span><small>Serviço (10%)</small><strong>{formatMoney(selected.total * 0.1)}</strong></span><div><span>Total da mesa</span><strong>{formatMoney(selected.total * 1.1)}</strong></div></div>
-        <div className="check-actions"><button className="ghost-button" type="button" onClick={() => onNotify("Pré-conta enviada para impressão.")}>Imprimir pré-conta</button><button className="primary-button" type="button" disabled={selected.total === 0} onClick={onClose}>Fechar conta</button></div>
+        <div className="check-actions"><button className="ghost-button" type="button" onClick={() => onNotify("Pré-conta enviada para impressão.")}>Imprimir</button><button className="primary-button" type="button" disabled={selected.total === 0} onClick={() => { playSound('pop'); onClose(); }}>Cobrar</button></div>
       </aside>
+
+      {/* MODAL: EQUIPE / GARÇONS */}
+      {showWaiterModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ width: "420px" }}>
+            <div className="modal-header">
+              <h2>Gestão de Equipe (Garçons)</h2>
+              <button className="close-button" type="button" onClick={() => setShowWaiterModal(false)}>×</button>
+            </div>
+            <div style={{ padding: "20px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px" }}>
+                {waiters.map(w => (
+                  <div key={w.id} style={{ display: "flex", alignItems: "center", gap: "12px", background: "rgba(255,255,255,0.03)", padding: "10px", borderRadius: "8px" }}>
+                    <span className={`avatar ${w.color}`}>{w.initials}</span>
+                    <span style={{ flex: 1, fontSize: "14px", fontWeight: "600" }}>{w.name}</span>
+                    <button type="button" style={{ border: 0, background: "transparent", color: "var(--orange)", cursor: "pointer", fontSize: "12px" }} onClick={() => { onWaitersUpdate(waiters.filter(wa => wa.id !== w.id)); onNotify("Garçom removido."); }}>Remover</button>
+                  </div>
+                ))}
+              </div>
+              
+              <div style={{ padding: "16px", border: "1px dashed var(--line)", borderRadius: "10px" }}>
+                <h3 style={{ fontSize: "14px", marginBottom: "12px", color: "var(--muted)" }}>Adicionar novo</h3>
+                <input type="text" className="modal-input" placeholder="Nome completo" value={newWaiterName} onChange={(e) => setNewWaiterName(e.target.value)} style={{ marginBottom: "12px" }} />
+                <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+                  {["purple", "orange", "mint", "coral", "blue"].map(color => (
+                    <button key={color} type="button" style={{ width: "24px", height: "24px", borderRadius: "50%", background: `var(--${color})`, border: newWaiterColor === color ? "2px solid white" : "2px solid transparent", cursor: "pointer" }} onClick={() => setNewWaiterColor(color)} />
+                  ))}
+                </div>
+                <button type="button" className="primary-button wide" onClick={handleAddWaiter} disabled={!newWaiterName.trim()}>Salvar Garçom</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDITAR MESA */}
+      {editingTableNumber !== null && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ width: "380px" }}>
+            <div className="modal-header">
+              <h2>Editar Mesa {editingTableNumber}</h2>
+              <button className="close-button" type="button" onClick={() => setEditingTableNumber(null)}>×</button>
+            </div>
+            <div style={{ padding: "20px" }}>
+              {(() => {
+                const t = tables.find(tb => tb.number === editingTableNumber);
+                if (!t) return null;
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "11px", color: "var(--muted)", marginBottom: "6px" }}>Lugares (Cadeiras)</label>
+                      <input type="number" className="modal-input" value={t.seats} onChange={(e) => onUpdateTable({ ...t, seats: parseInt(e.target.value) || 2 })} />
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                      <div>
+                        <label style={{ display: "block", fontSize: "11px", color: "var(--muted)", marginBottom: "6px" }}>Largura (Visual)</label>
+                        <input type="number" className="modal-input" value={t.width} onChange={(e) => onUpdateTable({ ...t, width: parseInt(e.target.value) || 104 })} />
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: "11px", color: "var(--muted)", marginBottom: "6px" }}>Altura (Visual)</label>
+                        <input type="number" className="modal-input" value={t.height} onChange={(e) => onUpdateTable({ ...t, height: parseInt(e.target.value) || 76 })} />
+                      </div>
+                    </div>
+                    <button type="button" className="ghost-button wide" style={{ color: "var(--orange)", borderColor: "rgba(229,109,53,0.3)", marginTop: "10px" }} onClick={() => { onRemoveTable(t.number); setEditingTableNumber(null); onNotify("Mesa removida com sucesso."); }}>Apagar Mesa</button>
+                    <button type="button" className="primary-button wide" onClick={() => setEditingTableNumber(null)}>Concluir</button>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1151,6 +1498,62 @@ function CrmView() {
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function IntegrationsView() {
+  return (
+    <div className="page-content integrations-page">
+      <div className="crm-header-section">
+        <div className="crm-header-titles">
+          <h1>Central de <span>Integrações</span></h1>
+          <p>Conecte o 2Type Control às principais plataformas e automatize sua operação.</p>
+        </div>
+      </div>
+      <div className="integrations-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "20px", marginTop: "24px" }}>
+        <div className="integration-card" style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: "14px", padding: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "white", display: "flex", alignItems: "center", justifyContent: "center", padding: "8px" }}>
+              <img src="https://logospng.org/download/ifood/logo-ifood-256.png" alt="iFood" style={{ width: "100%", height: "auto" }} />
+            </div>
+            <span className="crm-badge new">Conectado</span>
+          </div>
+          <div>
+            <h3 style={{ margin: "8px 0 4px", fontSize: "14px", color: "white" }}>iFood</h3>
+            <p style={{ margin: "0", fontSize: "11px", color: "var(--muted)", lineHeight: 1.4 }}>Receba pedidos, atualize status e gerencie o cardápio diretamente por aqui.</p>
+          </div>
+          <button className="ghost-button" style={{ marginTop: "auto", width: "100%" }}>Configurar Integração</button>
+        </div>
+        
+        <div className="integration-card" style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: "14px", padding: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "#25D366", display: "flex", alignItems: "center", justifyContent: "center", padding: "8px" }}>
+              <Icon name="whatsapp" />
+            </div>
+            <span className="crm-badge new">Ativo</span>
+          </div>
+          <div>
+            <h3 style={{ margin: "8px 0 4px", fontSize: "14px", color: "white" }}>WhatsApp Business API</h3>
+            <p style={{ margin: "0", fontSize: "11px", color: "var(--muted)", lineHeight: 1.4 }}>Automação de chat, botões de ação e inteligência artificial para pedidos.</p>
+          </div>
+          <button className="ghost-button" style={{ marginTop: "auto", width: "100%" }}>Desconectar</button>
+        </div>
+
+        <div className="integration-card" style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: "14px", padding: "20px", display: "flex", flexDirection: "column", gap: "12px", opacity: 0.7 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", padding: "8px" }}>
+              <Icon name="entregas" />
+            </div>
+            <span className="crm-badge">Não conectado</span>
+          </div>
+          <div>
+            <h3 style={{ margin: "8px 0 4px", fontSize: "14px", color: "white" }}>Loggi / Bee Delivery</h3>
+            <p style={{ margin: "0", fontSize: "11px", color: "var(--muted)", lineHeight: 1.4 }}>Encontre motoboys automaticamente e calcule a taxa de entrega.</p>
+          </div>
+          <button className="primary-button" style={{ marginTop: "auto", width: "100%" }}>Conectar</button>
+        </div>
       </div>
     </div>
   );
