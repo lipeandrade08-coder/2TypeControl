@@ -47,6 +47,8 @@ type Table = {
   y?: number;
   width?: number;
   height?: number;
+  area?: "salao" | "varanda";
+  reservedFor?: string;
 };
 
 const formatMoney = (value: number) =>
@@ -131,7 +133,7 @@ const initialWaiters: Waiter[] = [
 ];
 
 const initialTables: Table[] = [
-  { number: 1, seats: 4, status: "Livre", guests: 0, total: 0, items: [] },
+  { number: 1, seats: 4, status: "Livre", guests: 0, total: 0, items: [], x: 13, y: 27, width: 96, height: 72, area: "salao" },
   {
     number: 2,
     seats: 4,
@@ -145,8 +147,9 @@ const initialTables: Table[] = [
       { name: "Tiramisù", quantity: 1, price: 24 },
       { name: "Água com gás", quantity: 2, price: 10 },
     ],
+    x: 36, y: 27, width: 96, height: 72, area: "salao",
   },
-  { number: 3, seats: 2, status: "Reservada", guests: 2, total: 0, time: "20:30", items: [] },
+  { number: 3, seats: 2, status: "Reservada", guests: 2, total: 0, time: "20:30", items: [], x: 60, y: 27, width: 80, height: 62, area: "salao", reservedFor: "Família Rocha" },
   {
     number: 4,
     seats: 6,
@@ -160,8 +163,9 @@ const initialTables: Table[] = [
       { name: "Sucos", quantity: 4, price: 42 },
       { name: "Pudim", quantity: 2, price: 24.3 },
     ],
+    x: 83, y: 27, width: 112, height: 84, area: "salao",
   },
-  { number: 5, seats: 4, status: "Livre", guests: 0, total: 0, items: [] },
+  { number: 5, seats: 4, status: "Livre", guests: 0, total: 0, items: [], x: 13, y: 54, width: 96, height: 72, area: "salao" },
   {
     number: 6,
     seats: 4,
@@ -173,8 +177,9 @@ const initialTables: Table[] = [
       { name: "Massas", quantity: 2, price: 59.8 },
       { name: "Refrigerantes", quantity: 2, price: 16.6 },
     ],
+    x: 36, y: 54, width: 96, height: 72, area: "salao",
   },
-  { number: 7, seats: 2, status: "Livre", guests: 0, total: 0, items: [] },
+  { number: 7, seats: 2, status: "Livre", guests: 0, total: 0, items: [], x: 60, y: 54, width: 80, height: 62, area: "salao" },
   {
     number: 8,
     seats: 4,
@@ -187,8 +192,9 @@ const initialTables: Table[] = [
       { name: "Parmegiana", quantity: 2, price: 76.5 },
       { name: "Chopp", quantity: 2, price: 18 },
     ],
+    x: 83, y: 54, width: 96, height: 72, area: "salao",
   },
-  { number: 9, seats: 6, status: "Reservada", guests: 5, total: 0, time: "21:00", items: [] },
+  { number: 9, seats: 6, status: "Reservada", guests: 5, total: 0, time: "21:00", items: [], x: 13, y: 82, width: 112, height: 84, area: "salao", reservedFor: "Grupo Silva" },
   {
     number: 10,
     seats: 4,
@@ -197,9 +203,18 @@ const initialTables: Table[] = [
     total: 198.8,
     time: "54 min",
     items: [{ name: "Jantar completo", quantity: 4, price: 198.8 }],
+    x: 40, y: 82, width: 96, height: 72, area: "salao",
   },
-  { number: 11, seats: 2, status: "Livre", guests: 0, total: 0, items: [] },
-  { number: 12, seats: 8, status: "Livre", guests: 0, total: 0, items: [] },
+  { number: 11, seats: 2, status: "Livre", guests: 0, total: 0, items: [], x: 63, y: 82, width: 80, height: 62, area: "salao" },
+  { number: 12, seats: 8, status: "Livre", guests: 0, total: 0, items: [], x: 84, y: 82, width: 140, height: 96, area: "salao" },
+];
+
+const initialVarandaTables: Table[] = [
+  { number: 13, seats: 2, status: "Livre", guests: 0, total: 0, items: [], x: 20, y: 30, width: 80, height: 62, area: "varanda" },
+  { number: 14, seats: 2, status: "Livre", guests: 0, total: 0, items: [], x: 50, y: 30, width: 80, height: 62, area: "varanda" },
+  { number: 15, seats: 4, status: "Livre", guests: 0, total: 0, items: [], x: 80, y: 30, width: 96, height: 72, area: "varanda" },
+  { number: 16, seats: 2, status: "Reservada", guests: 2, total: 0, time: "21:30", items: [], x: 35, y: 68, width: 80, height: 62, area: "varanda", reservedFor: "Casal Mendes" },
+  { number: 17, seats: 4, status: "Livre", guests: 0, total: 0, items: [], x: 65, y: 68, width: 96, height: 72, area: "varanda" },
 ];
 
 type ChatMessage = { side: "customer" | "ai" | "operator"; text: string; time: string };
@@ -380,7 +395,7 @@ export function RestaurantDashboard() {
     };
   }, []);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
-  const [tables, setTables] = useState<Table[]>(initialTables);
+  const [tables, setTables] = useState<Table[]>([...initialTables, ...initialVarandaTables]);
   const [waiters, setWaiters] = useState<Waiter[]>(initialWaiters);
   const [selectedTable, setSelectedTable] = useState(2);
   const [feeModal, setFeeModal] = useState(false);
@@ -397,6 +412,19 @@ export function RestaurantDashboard() {
   const [muted, setMuted] = useState(isMuted);
   const [orderFilter, setOrderFilter] = useState("Todos");
   const [search, setSearch] = useState("");
+  const [newOrderModal, setNewOrderModal] = useState(false);
+  const [newOrderData, setNewOrderData] = useState<{ customer: string; channel: "WhatsApp" | "Site" | "Salão"; detail: string; total: string }>({ customer: "", channel: "WhatsApp", detail: "", total: "" });
+  const [splitCount, setSplitCount] = useState(1);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, text: "Pedido #1052 aguardando taxa de entrega", time: "há 3 min", read: false },
+    { id: 2, text: "Mesa 04 pediu a conta — pronto para cobrar", time: "há 8 min", read: false },
+    { id: 3, text: "Beatriz Lima perguntou sobre opção sem lactose", time: "há 12 min", read: true },
+    { id: 4, text: "Entregador Diego saiu com o pedido #1046", time: "há 25 min", read: true },
+  ]);
+  const [reserveModal, setReserveModal] = useState(false);
+  const [reserveTableNum, setReserveTableNum] = useState<number | null>(null);
+  const [reserveData, setReserveData] = useState({ name: "", time: "", guests: 2 });
 
   const todayLabel = useMemo(() => {
     const formatted = new Intl.DateTimeFormat("pt-BR", {
@@ -564,6 +592,34 @@ export function RestaurantDashboard() {
   const chooseView = (view: View) => {
     setActiveView(view);
     setMobileMenu(false);
+    setShowNotifications(false);
+  };
+
+  const addOrder = (order: Order) => {
+    setOrders(current => [order, ...current]);
+    notify(`Pedido #${order.id} criado com sucesso!`);
+    playSound('ding');
+  };
+
+  const openReserveModal = (tableNum: number) => {
+    setReserveTableNum(tableNum);
+    setReserveData({ name: "", time: "", guests: 2 });
+    setReserveModal(true);
+  };
+
+  const confirmReservation = () => {
+    if (!reserveTableNum || !reserveData.name || !reserveData.time) {
+      notify("Preencha o nome e o horário da reserva.");
+      return;
+    }
+    setTables(current => current.map(t =>
+      t.number === reserveTableNum
+        ? { ...t, status: "Reservada", time: reserveData.time, guests: reserveData.guests, reservedFor: reserveData.name }
+        : t
+    ));
+    setReserveModal(false);
+    notify(`Mesa ${String(reserveTableNum).padStart(2, "0")} reservada para ${reserveData.name} às ${reserveData.time}.`);
+    playSound('success');
   };
 
   return (
@@ -619,7 +675,7 @@ export function RestaurantDashboard() {
             <span style={{ flex: 1, color: "var(--muted)", textAlign: "left" }}>{muted ? "Sons mutados" : "Sons ativados"}</span>
           </button>
           
-          <button className="integration-card" type="button" onClick={() => notify("3 integrações ativas e sincronizadas.")}>
+          <button className="integration-card" type="button" onClick={() => chooseView("Integrações")}>
             <span className="integration-icon">⌁</span>
             <span><strong>Integrações</strong><small>3 de 4 conectadas</small></span>
             <span className="integration-progress"><i /></span>
@@ -648,7 +704,29 @@ export function RestaurantDashboard() {
               <input ref={searchInputRef} aria-label="Buscar pedido ou cliente" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar pedido ou cliente..." />
               <kbd>⌘ K</kbd>
             </label>
-            <button className="round-button notification" type="button" aria-label="Notificações" onClick={() => notify("Você tem novas notificações.")}>🔔<i /></button>
+            <div style={{ position: "relative" }}>
+              <button className="round-button notification" type="button" aria-label="Notificações" onClick={() => setShowNotifications(v => !v)}>🔔{notifications.some(n => !n.read) && <i />}</button>
+              {showNotifications && (
+                <>
+                  <button type="button" aria-label="Fechar notificações" style={{ position: "fixed", inset: 0, background: "transparent", border: 0, zIndex: 190, cursor: "default" }} onClick={() => setShowNotifications(false)} />
+                  <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 14, width: 340, padding: 0, boxShadow: "0 20px 60px rgba(0,0,0,0.5)", zIndex: 200 }}>
+                    <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--line)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <strong style={{ fontSize: 14 }}>Notificações</strong>
+                      <button type="button" onClick={() => setNotifications(n => n.map(x => ({ ...x, read: true })))} style={{ background: "transparent", border: 0, color: "var(--orange)", cursor: "pointer", fontSize: 11, fontWeight: 600 }}>Marcar todas como lidas</button>
+                    </div>
+                    {notifications.map(n => (
+                      <div key={n.id} style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", background: n.read ? "transparent" : "rgba(139,92,246,0.06)", display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer" }} onClick={() => setNotifications(ns => ns.map(x => x.id === n.id ? { ...x, read: true } : x))}>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: n.read ? "transparent" : "var(--purple)", marginTop: 5, flexShrink: 0, border: n.read ? "1px solid var(--line)" : "none" }} />
+                        <div style={{ flex: 1 }}>
+                          <p style={{ margin: 0, fontSize: 12, color: n.read ? "var(--muted)" : "white", lineHeight: 1.5 }}>{n.text}</p>
+                          <small style={{ color: "var(--muted)", fontSize: 10 }}>{n.time}</small>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
             <button className="live-status" type="button"><i /> Ao vivo</button>
           </div>
         </header>
@@ -674,6 +752,7 @@ export function RestaurantDashboard() {
             onAdvance={advanceOrder}
             onOpenFee={() => setFeeModal(true)}
             onNotify={notify}
+            onAddOrder={addOrder}
           />
         )}
         {activeView === "WhatsApp" && (
@@ -689,12 +768,13 @@ export function RestaurantDashboard() {
             onClose={openCheckoutModal}
             onNotify={notify}
             onUpdateTable={(t) => setTables(current => current.map(c => c.number === t.number ? t : c))}
-            onAddTable={() => setTables(current => [...current, { number: current.length > 0 ? Math.max(...current.map(c => c.number)) + 1 : 1, seats: 4, status: "Livre", guests: 0, total: 0, items: [], x: 10, y: 10, width: 104, height: 76 }])}
+            onAddTable={(area) => setTables(current => [...current, { number: current.length > 0 ? Math.max(...current.map(c => c.number)) + 1 : 1, seats: 4, status: "Livre", guests: 0, total: 0, items: [], x: 50, y: 50, width: 104, height: 76, area }])}
             onRemoveTable={(num) => {
               setTables(current => current.filter(c => c.number !== num));
-              if (selectedTable === num) setSelectedTable(1);
+              if (selectedTable === num) setSelectedTable(tables.find(t2 => t2.number !== num)?.number ?? 1);
             }}
             onWaitersUpdate={setWaiters}
+            onOpenReserve={openReserveModal}
           />
         )}
         {activeView === "Cardápio" && <MenuView menuItems={menuItems} setMenuItems={setMenuItems} onNotify={notify} />}
@@ -807,6 +887,18 @@ export function RestaurantDashboard() {
                   </div>
                 </div>
 
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: 10, padding: "10px 14px", marginTop: 12 }}>
+                  <span style={{ fontSize: 12, color: "var(--muted)" }}>Dividir conta</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <button type="button" onClick={() => setSplitCount(Math.max(1, splitCount - 1))} style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: 0, color: "white", cursor: "pointer", fontSize: 16, display: "grid", placeItems: "center" }}>−</button>
+                    <span style={{ fontWeight: 700, fontSize: 14, minWidth: 24, textAlign: "center" }}>{splitCount}x</span>
+                    <button type="button" onClick={() => setSplitCount(splitCount + 1)} style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: 0, color: "white", cursor: "pointer", fontSize: 16, display: "grid", placeItems: "center" }}>+</button>
+                  </div>
+                  {splitCount > 1 && (
+                    <span style={{ fontSize: 12, color: "var(--green)", fontWeight: 700 }}>{formatMoney((table.total * 1.1 - appliedDiscount) / splitCount)}/pessoa</span>
+                  )}
+                </div>
+
                 <div className="payment-methods">
                   <button type="button" aria-pressed={paymentMethod === "Pix"} className={`payment-method ${paymentMethod === "Pix" ? "selected" : ""}`} onClick={() => setPaymentMethod("Pix")}>
                     <div className="icon">◈</div>
@@ -833,6 +925,35 @@ export function RestaurantDashboard() {
       )}
 
       {toast && <div className="toast" role="status" aria-live="polite"><span>✓</span>{toast}</div>}
+
+      {reserveModal && reserveTableNum !== null && (
+        <div className="modal-backdrop">
+          <button className="modal-scrim" type="button" aria-label="Fechar reserva" onClick={() => setReserveModal(false)} />
+          <section className="fee-modal" role="dialog" aria-modal="true" aria-labelledby="reserve-title">
+            <button className="modal-close" type="button" aria-label="Fechar" onClick={() => setReserveModal(false)}>×</button>
+            <span className="modal-icon">📅</span>
+            <p className="eyebrow orange">SALÃO</p>
+            <h2 id="reserve-title">Reservar Mesa {String(reserveTableNum).padStart(2, "0")}</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24 }}>
+              <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                <span>Nome do cliente</span>
+                <input required placeholder="Ex: Família Silva" value={reserveData.name} onChange={e => setReserveData({ ...reserveData, name: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "white", outline: "none" }} />
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                  <span>Horário</span>
+                  <input required type="time" value={reserveData.time} onChange={e => setReserveData({ ...reserveData, time: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "white", outline: "none", colorScheme: "dark" }} />
+                </label>
+                <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                  <span>Pessoas</span>
+                  <input required type="number" min="1" max="20" value={reserveData.guests} onChange={e => setReserveData({ ...reserveData, guests: parseInt(e.target.value) || 1 })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "white", outline: "none" }} />
+                </label>
+              </div>
+              <button className="primary-button wide" type="button" onClick={confirmReservation}>Confirmar Reserva</button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
@@ -932,13 +1053,31 @@ function Overview({
   );
 }
 
-function OrdersView({ orders, filter, onFilter, onAdvance, onOpenFee, onNotify }: { orders: Order[]; filter: string; onFilter: (filter: string) => void; onAdvance: (id: number) => void; onOpenFee: () => void; onNotify: (message: string) => void }) {
+function OrdersView({ orders, filter, onFilter, onAdvance, onOpenFee, onNotify, onAddOrder }: { orders: Order[]; filter: string; onFilter: (filter: string) => void; onAdvance: (id: number) => void; onOpenFee: () => void; onNotify: (message: string) => void; onAddOrder?: (order: Order) => void }) {
   const columns: OrderStatus[] = ["Novo", "Confirmado", "Em preparo", "Pronto", "Saiu"];
+  const [localNewOrderModal, setLocalNewOrderModal] = useState(false);
+  const [localNewOrder, setLocalNewOrder] = useState<{ customer: string; channel: "WhatsApp" | "Site" | "Salão"; detail: string; total: string }>({ customer: "", channel: "WhatsApp", detail: "", total: "" });
+
+  const handleCreateOrder = () => {
+    if (!localNewOrder.customer.trim() || !localNewOrder.detail.trim()) { onNotify("Preencha o nome e os itens do pedido."); return; }
+    onAddOrder?.({
+      id: Math.floor(Math.random() * 9000) + 1000,
+      customer: localNewOrder.customer,
+      channel: localNewOrder.channel,
+      detail: localNewOrder.detail,
+      total: parseFloat(localNewOrder.total.replace(",", ".")) || 0,
+      time: "agora",
+      status: "Novo",
+    });
+    setLocalNewOrderModal(false);
+    setLocalNewOrder({ customer: "", channel: "WhatsApp", detail: "", total: "" });
+  };
+
   return (
     <div className="page-content">
       <div className="section-toolbar">
         <div className="filter-tabs">{["Todos", "WhatsApp", "Site", "Salão"].map((item) => <button type="button" className={filter === item ? "active" : ""} key={item} onClick={() => onFilter(item)}>{item}{item !== "Todos" && <small>{initialOrders.filter((order) => order.channel === item).length}</small>}</button>)}</div>
-        <button className="primary-button" type="button" onClick={() => onNotify("O cadastro de pedidos será conectado na próxima etapa.")}>+ Novo pedido</button>
+        <button className="primary-button" type="button" onClick={() => setLocalNewOrderModal(true)}>+ Novo pedido</button>
       </div>
       <section className="kanban-board">
         {columns.map((column) => {
@@ -959,6 +1098,41 @@ function OrdersView({ orders, filter, onFilter, onAdvance, onOpenFee, onNotify }
           );
         })}
       </section>
+
+      {localNewOrderModal && (
+        <div className="modal-backdrop">
+          <button className="modal-scrim" type="button" aria-label="Fechar" onClick={() => setLocalNewOrderModal(false)} />
+          <section className="fee-modal" role="dialog" aria-modal="true" aria-labelledby="new-order-title">
+            <button className="modal-close" type="button" aria-label="Fechar" onClick={() => setLocalNewOrderModal(false)}>×</button>
+            <span className="modal-icon">📋</span>
+            <p className="eyebrow orange">PEDIDOS</p>
+            <h2 id="new-order-title">Novo Pedido</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24 }}>
+              <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                <span>Nome do cliente</span>
+                <input required placeholder="Ex: João Silva" value={localNewOrder.customer} onChange={e => setLocalNewOrder({ ...localNewOrder, customer: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+              </label>
+              <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                <span>Canal</span>
+                <select value={localNewOrder.channel} onChange={e => setLocalNewOrder({ ...localNewOrder, channel: e.target.value as "WhatsApp" | "Site" | "Salão" })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }}>
+                  <option value="WhatsApp">WhatsApp</option>
+                  <option value="Site">Site</option>
+                  <option value="Salão">Salão</option>
+                </select>
+              </label>
+              <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                <span>Itens do pedido</span>
+                <input required placeholder="Ex: 2 pizzas • 1 refrigerante" value={localNewOrder.detail} onChange={e => setLocalNewOrder({ ...localNewOrder, detail: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+              </label>
+              <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                <span>Total estimado (R$)</span>
+                <input type="number" step="0.01" min="0" placeholder="0,00" value={localNewOrder.total} onChange={e => setLocalNewOrder({ ...localNewOrder, total: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+              </label>
+              <button className="primary-button wide" type="button" onClick={handleCreateOrder}>Criar Pedido</button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
@@ -1047,19 +1221,18 @@ function WhatsAppView({ aiEnabled, onToggleAi, onNotify }: { aiEnabled: boolean;
   );
 }
 
-function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, onNotify, onUpdateTable, onAddTable, onRemoveTable, onWaitersUpdate }: { tables: Table[]; waiters: Waiter[]; selected: Table; onSelect: (number: number) => void; onAddItem: () => void; onClose: () => void; onNotify: (message: string) => void; onUpdateTable: (t: Table) => void; onAddTable: () => void; onRemoveTable: (num: number) => void; onWaitersUpdate: (w: Waiter[]) => void }) {
+function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, onNotify, onUpdateTable, onAddTable, onRemoveTable, onWaitersUpdate, onOpenReserve }: { tables: Table[]; waiters: Waiter[]; selected: Table; onSelect: (number: number) => void; onAddItem: () => void; onClose: () => void; onNotify: (message: string) => void; onUpdateTable: (t: Table) => void; onAddTable: (area: "salao" | "varanda") => void; onRemoveTable: (num: number) => void; onWaitersUpdate: (w: Waiter[]) => void; onOpenReserve: (tableNum: number) => void }) {
   const [activeArea, setActiveArea] = useState("Salão principal");
   const [isEditingMap, setIsEditingMap] = useState(false);
   const [draggingTable, setDraggingTable] = useState<number | null>(null);
   const [showWaiterModal, setShowWaiterModal] = useState(false);
   const [editingTableNumber, setEditingTableNumber] = useState<number | null>(null);
-  
-  // Waiter assignment modal
   const [assignWaiterTable, setAssignWaiterTable] = useState<number | null>(null);
-
-  // New waiter form
   const [newWaiterName, setNewWaiterName] = useState("");
   const [newWaiterColor, setNewWaiterColor] = useState("purple");
+
+  const currentAreaKey = activeArea === "Varanda" ? "varanda" : "salao";
+  const floorTables = tables.filter(t => (t.area || "salao") === currentAreaKey);
 
   const getOccupancyText = (status: string) => {
     if (status === "Livre") return "Livre";
@@ -1073,7 +1246,7 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-    const table = tables.find(t => t.number === draggingTable);
+    const table = floorTables.find(t => t.number === draggingTable);
     if (table) {
       onUpdateTable({ ...table, x, y });
     }
@@ -1109,21 +1282,21 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
           <div style={{ display: "flex", gap: "10px" }}>
             {isEditingMap ? (
               <>
-                <button className="ghost-button" type="button" onClick={() => { playSound('pop'); onAddTable(); }}>+ Nova Mesa</button>
+                <button className="ghost-button" type="button" onClick={() => { playSound('pop'); onAddTable(currentAreaKey); }}>+ Nova Mesa</button>
                 <button className="primary-button" type="button" onClick={() => { setIsEditingMap(false); onNotify("Edições salvas."); }}>Salvar Mapa</button>
               </>
             ) : (
               <>
-                <button className="ghost-button" type="button" onClick={() => setShowWaiterModal(true)}>Gerenciar Equipe</button>
+                <button className="ghost-button" type="button" onClick={() => setShowWaiterModal(true)}>Gerenciar Equipe</button>
                 <button className="ghost-button" type="button" onClick={() => setIsEditingMap(true)}>Editar mapa</button>
               </>
             )}
           </div>
         </div>
-        <div className="floor-info"><span><strong>{tables.filter((table) => table.status === "Livre").length}</strong> livres</span><span><strong>{tables.filter((table) => table.status === "Ocupada").length}</strong> ocupadas</span><span><strong>{tables.filter((table) => table.status === "Conta").length}</strong> pediu conta</span><span><strong>{tables.filter((table) => table.status === "Reservada").length}</strong> reservadas</span></div>
+        <div className="floor-info"><span><strong>{floorTables.filter((table) => table.status === "Livre").length}</strong> livres</span><span><strong>{floorTables.filter((table) => table.status === "Ocupada").length}</strong> ocupadas</span><span><strong>{floorTables.filter((table) => table.status === "Conta").length}</strong> pediu conta</span><span><strong>{floorTables.filter((table) => table.status === "Reservada").length}</strong> reservadas</span></div>
         <div className={`floor-map ${isEditingMap ? "editing" : ""}`} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}>
           <div className="bar-counter">BAR / BALCÃO</div>
-          {tables.map((table) => {
+          {floorTables.map((table) => {
             const waiter = waiters.find(w => w.id === table.waiterId);
             return (
               <button 
@@ -1149,6 +1322,7 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
                 {waiter && !isEditingMap && <span style={{ position: "absolute", top: "-8px", right: "-8px", background: `var(--${waiter.color})`, color: "white", borderRadius: "50%", width: "20px", height: "20px", display: "grid", placeItems: "center", fontSize: "8px", fontWeight: "bold" }}>{waiter.initials}</span>}
                 <span>M{String(table.number).padStart(2, "0")}</span>
                 <small>{table.status === "Reservada" ? table.time : table.status === "Livre" ? `${table.seats} lugares` : getOccupancyText(table.status)}</small>
+                {table.status === "Reservada" && table.reservedFor && !isEditingMap && <b style={{ fontSize: 9, color: "var(--purple)", display: "block", marginTop: 2 }}>{table.reservedFor}</b>}
                 {table.guests > 0 && <b>{table.guests} pessoas</b>}
                 {isEditingMap && <div className="edit-overlay" style={{ position: "absolute", inset: 0, background: "rgba(229,109,53,0.3)", borderRadius: "inherit", zIndex: 20, display: "grid", placeItems: "center", opacity: draggingTable === table.number ? 1 : 0.4 }}><span style={{ color: "white", fontSize: "16px" }}>{draggingTable === table.number ? "✋" : "✏️"}</span></div>}
               </button>
@@ -1195,6 +1369,9 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
           )) : <div className="empty-check"><span>◇</span><strong>Nenhum item lançado</strong><small>Adicione o primeiro item desta mesa.</small></div>}
         </div>
         <button className="add-item-button" type="button" onClick={() => { playSound('pop'); onAddItem(); }}>＋ Adicionar item</button>
+        {selected.status === "Livre" && (
+          <button type="button" className="ghost-button wide" style={{ margin: "0 24px 12px", width: "calc(100% - 48px)" }} onClick={() => onOpenReserve(selected.number)}>📅 Reservar Esta Mesa</button>
+        )}
         <div className="check-total"><span><small>Subtotal</small><strong>{formatMoney(selected.total)}</strong></span><span><small>Serviço (10%)</small><strong>{formatMoney(selected.total * 0.1)}</strong></span><div><span>Total da mesa</span><strong>{formatMoney(selected.total * 1.1)}</strong></div></div>
         <div className="check-actions"><button className="ghost-button" type="button" onClick={() => onNotify("Pré-conta enviada para impressão.")}>Imprimir</button><button className="primary-button" type="button" disabled={selected.total === 0} onClick={() => { playSound('pop'); onClose(); }}>Cobrar</button></div>
       </aside>
@@ -1280,7 +1457,14 @@ function MenuView({ menuItems, setMenuItems, onNotify }: { menuItems: MenuItem[]
   const [newItem, setNewItem] = useState<Partial<MenuItem>>({ category: "Pizzas", available: true });
 
   const filteredItems = activeCategory === "Todos" ? menuItems : menuItems.filter(i => i.category === activeCategory);
-  const categories = ["Todos", "Pizzas", "Pratos", "Massas", "Sobremesas", "Bebidas"];
+  const categories = [
+    { name: "Todos", icon: "📋" },
+    { name: "Pizzas", icon: "🍕" },
+    { name: "Pratos", icon: "🍝" },
+    { name: "Massas", icon: "🍜" },
+    { name: "Sobremesas", icon: "🍰" },
+    { name: "Bebidas", icon: "🥤" },
+  ];
 
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1307,7 +1491,7 @@ function MenuView({ menuItems, setMenuItems, onNotify }: { menuItems: MenuItem[]
       <div className="section-toolbar">
         <div className="filter-tabs">
           {categories.map(c => (
-            <button key={c} className={activeCategory === c ? "active" : ""} type="button" onClick={() => setActiveCategory(c)}>{c}</button>
+            <button key={c.name} className={activeCategory === c.name ? "active" : ""} type="button" onClick={() => setActiveCategory(c.name)}>{c.icon} {c.name}</button>
           ))}
         </div>
         <button className="primary-button" type="button" onClick={() => setModalOpen(true)}>+ Novo item</button>
@@ -1459,6 +1643,18 @@ function ReportsView() {
       </section>
 
       <div className="reports-grid">
+        <section className="panel" style={{ padding: 24, gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 16 }}>
+          <PanelHeader title="Faturamento Mensal" subtitle="Histórico de vendas dos últimos 12 meses" />
+          <div style={{ height: 200, display: "flex", alignItems: "flex-end", gap: 8, marginTop: 16, borderBottom: "1px solid var(--line)", paddingBottom: 8 }}>
+            {bars.map((bar, i) => (
+              <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                <div style={{ width: "100%", background: "var(--purple)", borderRadius: "4px 4px 0 0", height: `${bar}%`, minHeight: 4, transition: "height 0.3s ease", opacity: i === 11 ? 1 : 0.6 }} />
+                <span style={{ fontSize: 10, color: "var(--muted)" }}>{["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][i]}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
           <PanelHeader title="Detalhamento de Gastos" subtitle="Distribuição por categoria" />
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -1568,7 +1764,7 @@ function ReportsView() {
                 </label>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Data</span>
-                  <input required type="text" placeholder="DD/MM/AAAA" value={newExpense.date || ""} onChange={e => setNewExpense({...newExpense, date: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+                  <input required type="date" value={newExpense.date || ""} onChange={e => setNewExpense({...newExpense, date: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none", colorScheme: "dark" }} />
                 </label>
               </div>
 
@@ -1637,6 +1833,8 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
 
 function CrmView() {
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  const [searchCrm, setSearchCrm] = useState("");
+  const [filterSegment, setFilterSegment] = useState("Todos os Segmentos");
   
   const crmData = [
     { id: "C01", name: "Camila Rocha", phone: "(11) 98765-4321", totalSpent: 1254.90, avgTicket: 89.60, orders: 14, lastVisit: "08/08", favDish: "Burger Artesanal", segment: "VIP" },
@@ -1649,15 +1847,21 @@ function CrmView() {
     { id: "C08", name: "Juliana Santos", phone: "(11) 95555-4444", totalSpent: 870.20, avgTicket: 79.10, orders: 11, lastVisit: "25/07", favDish: "Burger Duplo", segment: "Recorrente" },
   ];
 
+  const filteredCrm = crmData.filter(client => {
+    const matchesSearch = client.name.toLowerCase().includes(searchCrm.toLowerCase()) || client.phone.includes(searchCrm);
+    const matchesSegment = filterSegment === "Todos os Segmentos" || client.segment === filterSegment;
+    return matchesSearch && matchesSegment;
+  });
+
   const toggleClient = (id: string) => {
     setSelectedClients(prev => prev.includes(id) ? prev.filter(cId => cId !== id) : [...prev, id]);
   };
 
   const toggleAll = () => {
-    if (selectedClients.length === crmData.length) {
+    if (selectedClients.length === filteredCrm.length) {
       setSelectedClients([]);
     } else {
-      setSelectedClients(crmData.map(c => c.id));
+      setSelectedClients(filteredCrm.map(c => c.id));
     }
   };
 
@@ -1688,16 +1892,16 @@ function CrmView() {
         <div className="spreadsheet-toolbar">
           <div className="search-box spreadsheet-search">
             <Icon name="visao-geral" /> 
-            <input type="text" placeholder="Buscar cliente por nome ou telefone..." />
+            <input type="text" placeholder="Buscar cliente por nome ou telefone..." value={searchCrm} onChange={e => setSearchCrm(e.target.value)} />
             <kbd>⌘K</kbd>
           </div>
           <div className="spreadsheet-filters">
-            <select>
-              <option>Todos os Segmentos</option>
-              <option>VIP</option>
-              <option>Recorrentes</option>
-              <option>Novos</option>
-              <option>Em Risco</option>
+            <select value={filterSegment} onChange={e => setFilterSegment(e.target.value)}>
+              <option value="Todos os Segmentos">Todos os Segmentos</option>
+              <option value="VIP">VIP</option>
+              <option value="Recorrente">Recorrente</option>
+              <option value="Novo">Novo</option>
+              <option value="Em Risco">Em Risco</option>
             </select>
             <select>
               <option>Mais recentes</option>
@@ -1712,7 +1916,7 @@ function CrmView() {
             <thead>
               <tr>
                 <th className="checkbox-cell">
-                  <input type="checkbox" checked={selectedClients.length === crmData.length && crmData.length > 0} onChange={toggleAll} />
+                  <input type="checkbox" checked={selectedClients.length === filteredCrm.length && filteredCrm.length > 0} onChange={toggleAll} />
                 </th>
                 <th>Cliente</th>
                 <th>Contato</th>
@@ -1726,7 +1930,7 @@ function CrmView() {
               </tr>
             </thead>
             <tbody>
-              {crmData.map(client => (
+              {filteredCrm.length > 0 ? filteredCrm.map(client => (
                 <tr key={client.id} className={`spreadsheet-row ${selectedClients.includes(client.id) ? 'selected' : ''}`}>
                   <td className="checkbox-cell">
                     <input type="checkbox" checked={selectedClients.includes(client.id)} onChange={() => toggleClient(client.id)} />
@@ -1751,7 +1955,9 @@ function CrmView() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr><td colSpan={10} style={{ textAlign: "center", padding: "40px", color: "var(--muted)" }}>Nenhum cliente encontrado.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
