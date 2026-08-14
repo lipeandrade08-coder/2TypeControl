@@ -530,8 +530,64 @@ button:active { transform: scale(0.96); transition: transform 0.1s; }
 .nav-badge:not(.green) { animation: pulse-ring 2s infinite; }
 .nav-badge.green { animation: pulse-ring 2s infinite; animation-name: pulse-ring-green; }
 
-@keyframes pulse-ring-green {
-  0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.4); }
-  70% { box-shadow: 0 0 0 6px rgba(0, 230, 118, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+/* Mobile App Simulation (Waiter & Client Menu) */
+.waiter-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: #0f172a;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
 }
+
+.waiter-frame {
+  width: 400px;
+  height: 800px;
+  background-color: #020617;
+  border: 12px solid #1e293b;
+  border-radius: 40px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.kds-layout {
+  background: #0a0a0a;
+  min-height: 100vh;
+  color: white;
+  padding: 20px;
+}
+
+.kds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+/* Fullscreen on real mobile */
+@media (max-width: 560px) {
+  .waiter-backdrop {
+    background-color: #020617;
+  }
+  
+  .waiter-frame {
+    width: 100vw;
+    height: 100dvh;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .kds-layout {
+    padding: 12px;
+  }
+
+  .kds-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+}
+

@@ -349,6 +349,21 @@ export function playSound(type: 'pop' | 'ding' | 'success') {
   }
 }
 
+const initialJardinsOrders: Order[] = [
+  { id: 2001, customer: "Marcos Silva", channel: "WhatsApp", detail: "1 Hambúrguer Artesanal", total: 35.9, time: "há 2 min", status: "Novo" },
+  { id: 2002, customer: "Mesa 02", channel: "Salão", detail: "2 Chopps • 1 Porção Batata", total: 58.0, time: "há 15 min", status: "Em preparo" },
+];
+
+const initialJardinsTables: Table[] = [
+  { number: 1, seats: 4, status: "Livre", guests: 0, total: 0, items: [], x: 20, y: 30, width: 90, height: 70, area: "salao" },
+  { number: 2, seats: 4, status: "Ocupada", guests: 2, total: 58.0, time: "15 min", items: [{name: "Chopp", quantity: 2, price: 14}, {name: "Porção Batata", quantity: 1, price: 30}], x: 50, y: 30, width: 90, height: 70, area: "salao" },
+  { number: 3, seats: 2, status: "Livre", guests: 0, total: 0, items: [], x: 80, y: 30, width: 70, height: 60, area: "salao" },
+];
+
+const initialJardinsWaiters: Waiter[] = [
+  { id: "w3", name: "Felipe Jardins", initials: "FJ", color: "var(--blue)" }
+];
+
 export function RestaurantDashboard() {
   const [activeView, setActiveView] = useState<View>("Visão geral");
   const [orders, setOrders] = useState<Order[]>(initialOrders);
@@ -356,12 +371,14 @@ export function RestaurantDashboard() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const feeInputRef = useRef<HTMLInputElement>(null);
   const toastTimerRef = useRef<number | undefined>(undefined);
+  const activeUnitRef = useRef<"Matriz" | "Jardins">("Matriz");
 
   useEffect(() => {
     let mounted = true;
     let controller: AbortController | undefined;
 
     const fetchOrders = async () => {
+      if (activeUnitRef.current !== "Matriz") return;
       controller?.abort();
       controller = new AbortController();
       try {
@@ -425,6 +442,32 @@ export function RestaurantDashboard() {
   const [reserveModal, setReserveModal] = useState(false);
   const [reserveTableNum, setReserveTableNum] = useState<number | null>(null);
   const [reserveData, setReserveData] = useState({ name: "", time: "", guests: 2 });
+  const [activeUnit, setActiveUnit] = useState<"Matriz" | "Jardins">("Matriz");
+  const [showUnitSwitcher, setShowUnitSwitcher] = useState(false);
+  const [kdsMode, setKdsMode] = useState(false);
+  const [waiterMode, setWaiterMode] = useState(false);
+  const [clientSimulatorTable, setClientSimulatorTable] = useState<number | null>(null);
+
+  useEffect(() => {
+    activeUnitRef.current = activeUnit;
+  }, [activeUnit]);
+
+  useEffect(() => {
+    if (!aiEnabled) return;
+    const interval = window.setInterval(() => {
+      const tips = [
+        "🤖 Inteligência Artificial: Vendas de pizza estão 30% abaixo da média desta quinta — quer ativar promoção?",
+        "🤖 Inteligência Artificial: Mesa 4 está há 1h40 sem pedir sobremesa — boa hora para oferecer!",
+        "🤖 Inteligência Artificial: Camila Rocha pediu 14x. Ela não pede há 2 semanas — enviar cupom?",
+        "🤖 Inteligência Artificial: A taxa de ocupação da Varanda caiu 15% nos últimos 3 dias."
+      ];
+      const tip = tips[Math.floor(Math.random() * tips.length)];
+      setNotifications(n => [{ id: Math.random(), text: tip, time: "agora", read: false }, ...n]);
+      setToast(tip.replace("🤖 Inteligência Artificial: ", ""));
+      playSound('ding');
+    }, 45000);
+    return () => window.clearInterval(interval);
+  }, [aiEnabled]);
 
   const todayLabel = useMemo(() => {
     const formatted = new Intl.DateTimeFormat("pt-BR", {
@@ -622,6 +665,55 @@ export function RestaurantDashboard() {
     playSound('success');
   };
 
+  if (kdsMode) {
+    return <KdsView orders={orders} onAdvance={advanceOrder} onExit={() => setKdsMode(false)} />;
+  }
+
+  if (waiterMode) {
+    return (
+      <WaiterView 
+        tables={tables} 
+        menuItems={menuItems}
+        onExit={() => setWaiterMode(false)}
+        onAddItems={(tableNum, items) => {
+          const totalToAdd = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+          
+          setTables(current => current.map(t => {
+            if (t.number !== tableNum) return t;
+            
+            const newItems = [...(t.items || [])];
+            items.forEach(newItem => {
+              const existing = newItems.find(i => i.name === newItem.name);
+              if (existing) {
+                existing.quantity += newItem.quantity;
+              } else {
+                newItems.push({ ...newItem });
+              }
+            });
+            
+            return {
+              ...t,
+              status: "Ocupada",
+              total: t.total + totalToAdd,
+              items: newItems
+            };
+          }));
+          
+          const orderStr = items.map(i => `${i.quantity}x ${i.name}`).join(" • ");
+          addOrder({
+            id: 3000 + Math.floor(Math.random() * 1000),
+            customer: `Mesa ${String(tableNum).padStart(2, "0")}`,
+            channel: "Salão",
+            detail: orderStr,
+            total: totalToAdd,
+            time: "agora",
+            status: "Novo"
+          });
+        }}
+      />
+    );
+  }
+
   return (
     <div className="app-shell">
       <aside className={`sidebar ${mobileMenu ? "sidebar-open" : ""}`}>
@@ -629,11 +721,36 @@ export function RestaurantDashboard() {
           <img src="/2type-control-assets/logos/svg/logo-horizontal-white.svg" alt="2Type Control" style={{ height: 26, width: "auto" }} />
         </button>
 
-        <button className="restaurant-switch" type="button" onClick={() => notify("Seletor de unidade aberto.")}>
-          <span className="restaurant-avatar">CF</span>
-          <span><strong>Casa do Forno</strong><small>Unidade Centro</small></span>
-          <span className="chevron">⌄</span>
-        </button>
+        <div style={{ position: "relative" }}>
+          <button className="restaurant-switch" type="button" onClick={() => setShowUnitSwitcher(!showUnitSwitcher)}>
+            <span className="restaurant-avatar">{activeUnit === "Matriz" ? "CF" : "CJ"}</span>
+            <span><strong>Casa do Forno</strong><small>Unidade {activeUnit}</small></span>
+            <span className="chevron">⌄</span>
+          </button>
+          {showUnitSwitcher && (
+            <>
+              <div style={{ position: "fixed", inset: 0, zIndex: 100 }} onClick={() => setShowUnitSwitcher(false)} />
+              <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 16, right: 16, background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 8, padding: 8, zIndex: 110, display: "flex", flexDirection: "column", gap: 4 }}>
+                <button type="button" onClick={() => { 
+                  setActiveUnit("Matriz"); 
+                  setOrders(initialOrders);
+                  setTables([...initialTables, ...initialVarandaTables]);
+                  setWaiters(initialWaiters);
+                  setShowUnitSwitcher(false); 
+                  notify("Unidade Matriz carregada."); 
+                }} style={{ padding: "8px 12px", background: activeUnit === "Matriz" ? "rgba(139,92,246,0.1)" : "transparent", border: 0, color: "white", borderRadius: 6, textAlign: "left", cursor: "pointer" }}>Unidade Matriz</button>
+                <button type="button" onClick={() => { 
+                  setActiveUnit("Jardins");
+                  setOrders(initialJardinsOrders);
+                  setTables(initialJardinsTables);
+                  setWaiters(initialJardinsWaiters);
+                  setShowUnitSwitcher(false); 
+                  notify("Unidade Jardins carregada."); 
+                }} style={{ padding: "8px 12px", background: activeUnit === "Jardins" ? "rgba(139,92,246,0.1)" : "transparent", border: 0, color: "white", borderRadius: 6, textAlign: "left", cursor: "pointer" }}>Unidade Jardins</button>
+              </div>
+            </>
+          )}
+        </div>
 
         <nav className="nav-list" aria-label="Navegação principal">
           {navigation.map((item) => (
@@ -728,6 +845,8 @@ export function RestaurantDashboard() {
               )}
             </div>
             <button className="live-status" type="button"><i /> Ao vivo</button>
+            <button className="primary-button" type="button" onClick={() => setWaiterMode(true)} style={{ marginLeft: 16, padding: "8px 12px", background: "var(--blue)" }}>📱 Modo Garçom</button>
+            <button className="primary-button" type="button" onClick={() => setKdsMode(true)} style={{ marginLeft: 8, padding: "8px 12px", background: "var(--orange)" }}>Modo Cozinha (KDS)</button>
           </div>
         </header>
 
@@ -775,6 +894,7 @@ export function RestaurantDashboard() {
             }}
             onWaitersUpdate={setWaiters}
             onOpenReserve={openReserveModal}
+            onOpenQr={(num) => setClientSimulatorTable(num)}
           />
         )}
         {activeView === "Cardápio" && <MenuView menuItems={menuItems} setMenuItems={setMenuItems} onNotify={notify} />}
@@ -954,6 +1074,13 @@ export function RestaurantDashboard() {
           </section>
         </div>
       )}
+      {clientSimulatorTable !== null && (
+        <ClientMenuSimulator tableNum={clientSimulatorTable} onClose={() => setClientSimulatorTable(null)} menuItems={menuItems} onPlaceOrder={(items, total) => {
+          const detail = items.map(i => `${i.quantity}x ${i.name}`).join(" • ");
+          addOrder({ id: Math.floor(Math.random() * 9000) + 1000, customer: `Mesa ${String(clientSimulatorTable).padStart(2, "0")}`, channel: "Salão", detail, total, time: "agora", status: "Novo" });
+          setClientSimulatorTable(null);
+        }} />
+      )}
     </div>
   );
 }
@@ -1011,6 +1138,21 @@ function Overview({
                 <button className="row-action" type="button" aria-label={`Avançar pedido ${order.id}`}>›</button>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section className="panel insights-panel" style={{ background: "rgba(139,92,246,0.05)", border: "1px solid rgba(139,92,246,0.2)" }}>
+          <PanelHeader title="Insights da IA" subtitle="Análise em tempo real" action="Ver relatório" onAction={() => onView("Relatórios")} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+            <div style={{ padding: 12, background: "rgba(0,0,0,0.2)", borderRadius: 8, borderLeft: "3px solid var(--orange)", fontSize: 13, lineHeight: 1.4 }}>
+              🤖 <strong>Oportunidade:</strong> Vendas de massas estão 30% abaixo da média nesta quinta-feira. Recomendamos ativar uma promoção relâmpago.
+            </div>
+            <div style={{ padding: 12, background: "rgba(0,0,0,0.2)", borderRadius: 8, borderLeft: "3px solid var(--green)", fontSize: 13, lineHeight: 1.4 }}>
+              🤖 <strong>Atenção ao Salão:</strong> A Mesa 04 está há 1h40 sem pedir sobremesa. Boa hora para o garçom oferecer!
+            </div>
+            <div style={{ padding: 12, background: "rgba(0,0,0,0.2)", borderRadius: 8, borderLeft: "3px solid var(--blue)", fontSize: 13, lineHeight: 1.4 }}>
+              🤖 <strong>CRM:</strong> Camila Rocha pediu 14x, mas não pede há 2 semanas. Enviar cupom automático de saudade?
+            </div>
           </div>
         </section>
 
@@ -1221,7 +1363,7 @@ function WhatsAppView({ aiEnabled, onToggleAi, onNotify }: { aiEnabled: boolean;
   );
 }
 
-function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, onNotify, onUpdateTable, onAddTable, onRemoveTable, onWaitersUpdate, onOpenReserve }: { tables: Table[]; waiters: Waiter[]; selected: Table; onSelect: (number: number) => void; onAddItem: () => void; onClose: () => void; onNotify: (message: string) => void; onUpdateTable: (t: Table) => void; onAddTable: (area: "salao" | "varanda") => void; onRemoveTable: (num: number) => void; onWaitersUpdate: (w: Waiter[]) => void; onOpenReserve: (tableNum: number) => void }) {
+function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, onNotify, onUpdateTable, onAddTable, onRemoveTable, onWaitersUpdate, onOpenReserve, onOpenQr }: { tables: Table[]; waiters: Waiter[]; selected: Table; onSelect: (number: number) => void; onAddItem: () => void; onClose: () => void; onNotify: (message: string) => void; onUpdateTable: (t: Table) => void; onAddTable: (area: "salao" | "varanda") => void; onRemoveTable: (num: number) => void; onWaitersUpdate: (w: Waiter[]) => void; onOpenReserve: (tableNum: number) => void; onOpenQr: (tableNum: number) => void }) {
   const [activeArea, setActiveArea] = useState("Salão principal");
   const [isEditingMap, setIsEditingMap] = useState(false);
   const [draggingTable, setDraggingTable] = useState<number | null>(null);
@@ -1373,7 +1515,10 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
           <button type="button" className="ghost-button wide" style={{ margin: "0 24px 12px", width: "calc(100% - 48px)" }} onClick={() => onOpenReserve(selected.number)}>📅 Reservar Esta Mesa</button>
         )}
         <div className="check-total"><span><small>Subtotal</small><strong>{formatMoney(selected.total)}</strong></span><span><small>Serviço (10%)</small><strong>{formatMoney(selected.total * 0.1)}</strong></span><div><span>Total da mesa</span><strong>{formatMoney(selected.total * 1.1)}</strong></div></div>
-        <div className="check-actions"><button className="ghost-button" type="button" onClick={() => onNotify("Pré-conta enviada para impressão.")}>Imprimir</button><button className="primary-button" type="button" disabled={selected.total === 0} onClick={() => { playSound('pop'); onClose(); }}>Cobrar</button></div>
+        <div className="check-actions">
+          <button className="ghost-button" type="button" onClick={() => onOpenQr(selected.number)}>📱 QR da Mesa</button>
+          <button className="primary-button" type="button" disabled={selected.total === 0} onClick={() => { playSound('pop'); onClose(); }}>Cobrar</button>
+        </div>
       </aside>
 
       {/* MODAL: EQUIPE / GARÇONS */}
@@ -2027,6 +2172,211 @@ function IntegrationsView() {
           </div>
           <button className="primary-button" style={{ marginTop: "auto", width: "100%" }}>Conectar</button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function KdsView({ orders, onAdvance, onExit }: { orders: Order[], onAdvance: (id: number) => void, onExit: () => void }) {
+  const pendingOrders = orders.filter(o => o.status === "Novo" || o.status === "Confirmado" || o.status === "Em preparo");
+  return (
+    <div className="kds-layout">
+      <header style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: "var(--orange)" }}>Monitor de Cozinha (KDS)</h1>
+        <button className="ghost-button" type="button" onClick={onExit} style={{ background: "rgba(255,255,255,0.1)", border: 0, color: "white", padding: "8px 16px", borderRadius: 8, cursor: "pointer" }}>← Voltar ao Sistema</button>
+      </header>
+      <div className="kds-grid">
+        {pendingOrders.length === 0 && <p style={{ color: "#666" }}>Nenhum pedido na fila.</p>}
+        {pendingOrders.map(order => (
+          <div key={order.id} style={{ background: "#1a1a1a", border: "1px solid #333", borderRadius: 12, padding: 16, display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, borderBottom: "1px solid #333", paddingBottom: 12 }}>
+              <strong style={{ fontSize: 18 }}>#{order.id}</strong>
+              <span style={{ fontSize: 14, color: order.status === "Em preparo" ? "var(--green)" : "var(--orange)", fontWeight: 600 }}>{order.status}</span>
+            </div>
+            <p style={{ margin: "0 0 16px", fontSize: 16, lineHeight: 1.5 }}>{order.detail.split(' • ').map((str, i) => <span key={i} style={{display: "block", marginBottom: 4}}>{str}</span>)}</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", borderTop: "1px solid #333", paddingTop: 12 }}>
+              <span style={{ fontSize: 12, color: "#999" }}>{order.time}</span>
+              <button className="primary-button" style={{ padding: "8px 16px", background: "var(--green)" }} onClick={() => onAdvance(order.id)}>Item Pronto ✓</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ClientMenuSimulator({ tableNum, onClose, menuItems, onPlaceOrder }: { tableNum: number, onClose: () => void, menuItems: MenuItem[], onPlaceOrder: (items: any[], total: number) => void }) {
+  const [cart, setCart] = useState<{name: string, quantity: number, price: number}[]>([]);
+  return (
+    <div className="waiter-backdrop">
+      <div className="waiter-frame">
+        <header style={{ background: "var(--orange)", padding: "16px", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ width: 32 }} />
+          <div>
+            <h2 style={{ color: "white", margin: 0, fontSize: 18 }}>Mesa {tableNum}</h2>
+            <p style={{ margin: 0, fontSize: 12, color: "rgba(255,255,255,0.8)" }}>Autoatendimento</p>
+          </div>
+          <button style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.2)", border: 0, color: "white", fontWeight: 700, fontSize: 18, cursor: "pointer", display: "grid", placeItems: "center" }} onClick={onClose}>×</button>
+        </header>
+        <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
+          {menuItems.map(item => (
+            <div key={item.name} style={{ background: "#222", padding: 16, borderRadius: 12, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <strong style={{ color: "white", display: "block", fontSize: 14 }}>{item.name}</strong>
+                <span style={{ color: "var(--orange)", fontSize: 14, fontWeight: 700 }}>{formatMoney(item.price)}</span>
+              </div>
+              <button style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--purple)", border: 0, color: "white", fontWeight: 700, cursor: "pointer", display: "grid", placeItems: "center" }} onClick={() => {
+                const ex = cart.find(c => c.name === item.name);
+                if (ex) setCart(cart.map(c => c.name === item.name ? { ...c, quantity: c.quantity + 1 } : c));
+                else setCart([...cart, { name: item.name, price: item.price, quantity: 1 }]);
+              }}>+</button>
+            </div>
+          ))}
+        </div>
+        {cart.length > 0 && (
+          <div style={{ padding: 20, background: "#222", borderTop: "1px solid #333" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, color: "white" }}>
+              <span style={{ fontSize: 14 }}>Total do pedido:</span>
+              <strong style={{ fontSize: 16 }}>{formatMoney(cart.reduce((a, b) => a + b.price * b.quantity, 0))}</strong>
+            </div>
+            <button style={{ width: "100%", padding: 16, background: "var(--green)", border: 0, borderRadius: 12, color: "white", fontWeight: 700, fontSize: 16, cursor: "pointer" }} onClick={() => onPlaceOrder(cart, cart.reduce((a, b) => a + b.price * b.quantity, 0))}>Enviar Pedido para Cozinha</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function WaiterView({ 
+  tables, 
+  menuItems, 
+  onExit,
+  onAddItems
+}: { 
+  tables: Table[]; 
+  menuItems: MenuItem[];
+  onExit: () => void;
+  onAddItems: (tableNum: number, items: {name: string, price: number, quantity: number}[]) => void;
+}) {
+  const [selectedTable, setSelectedTable] = useState<number | null>(null);
+  const [cart, setCart] = useState<{name: string, price: number, quantity: number}[]>([]);
+
+  const addToCart = (item: MenuItem) => {
+    setCart(current => {
+      const exists = current.find(i => i.name === item.name);
+      if (exists) {
+        return current.map(i => i.name === item.name ? { ...i, quantity: i.quantity + 1 } : i);
+      }
+      return [...current, { name: item.name, price: item.price, quantity: 1 }];
+    });
+  };
+
+  const removeFromCart = (name: string) => {
+    setCart(current => current.map(i => i.name === name ? { ...i, quantity: i.quantity - 1 } : i).filter(i => i.quantity > 0));
+  };
+
+  const tableObj = selectedTable ? tables.find(t => t.number === selectedTable) : null;
+  const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+  return (
+    <div className="waiter-backdrop">
+      {/* Mobile Frame Simulation */}
+      <div className="waiter-frame">
+        
+        {/* Mobile Header */}
+        <div style={{ padding: "20px 20px 10px", background: "var(--panel)", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--line)" }}>
+          {selectedTable ? (
+            <button onClick={() => { setSelectedTable(null); setCart([]); }} style={{ background: "transparent", border: 0, color: "var(--blue)", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+              <span>←</span> Voltar
+            </button>
+          ) : (
+            <div style={{ color: "white", fontSize: 18, fontWeight: 600 }}>Atendimento</div>
+          )}
+          <button onClick={onExit} style={{ background: "transparent", border: 0, color: "var(--red)", fontSize: 14, cursor: "pointer" }}>Sair</button>
+        </div>
+
+        {/* Content */}
+        <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
+          {!selectedTable ? (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {tables.map(t => (
+                <button 
+                  key={t.number}
+                  onClick={() => setSelectedTable(t.number)}
+                  style={{
+                    background: t.status === "Ocupada" ? "rgba(139,92,246,0.15)" : "var(--panel)",
+                    border: `1px solid ${t.status === "Ocupada" ? "var(--purple)" : "var(--line)"}`,
+                    borderRadius: 12,
+                    padding: 16,
+                    textAlign: "center",
+                    cursor: "pointer",
+                    color: "white"
+                  }}
+                >
+                  <div style={{ fontSize: 24, fontWeight: 700 }}>Mesa {String(t.number).padStart(2, '0')}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{t.status}</div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div>
+              {tableObj && tableObj.items && tableObj.items.length > 0 && (
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontSize: 16, color: "var(--muted)", fontWeight: 600, marginBottom: 12, textTransform: "uppercase" }}>Conta Parcial</div>
+                  <div style={{ background: "rgba(139,92,246,0.1)", borderRadius: 12, padding: 16, border: "1px solid var(--purple)" }}>
+                    {tableObj.items.map((it, idx) => (
+                      <div key={idx} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, color: "white", fontSize: 14 }}>
+                        <span>{it.quantity}x {it.name}</span>
+                        <span>R$ {(it.price * it.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px dashed rgba(255,255,255,0.2)", display: "flex", justifyContent: "space-between", color: "var(--orange)", fontWeight: 700 }}>
+                      <span>Subtotal</span>
+                      <span>R$ {tableObj.total.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ fontSize: 20, color: "white", fontWeight: 600, marginBottom: 16 }}>Cardápio</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {menuItems.map(item => (
+                  <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--panel)", padding: 12, borderRadius: 8, border: "1px solid var(--line)" }}>
+                    <div>
+                      <div style={{ color: "white", fontSize: 14, fontWeight: 500 }}>{item.name}</div>
+                      <div style={{ color: "var(--purple)", fontSize: 13 }}>R$ {item.price.toFixed(2)}</div>
+                    </div>
+                    <button onClick={() => addToCart(item)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(139,92,246,0.2)", color: "var(--purple)", border: 0, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Footer / Cart */}
+        {selectedTable && (
+          <div style={{ padding: 20, background: "var(--panel)", borderTop: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", color: "white" }}>
+              <span style={{ fontSize: 14 }}>Itens ({cart.reduce((acc, c) => acc + c.quantity, 0)})</span>
+              <strong style={{ fontSize: 18 }}>R$ {cartTotal.toFixed(2)}</strong>
+            </div>
+            
+            {cart.length > 0 && (
+              <button 
+                onClick={() => {
+                  onAddItems(selectedTable, cart);
+                  setSelectedTable(null);
+                  setCart([]);
+                }}
+                style={{ width: "100%", background: "var(--purple)", color: "white", padding: 16, borderRadius: 12, border: 0, fontSize: 16, fontWeight: 600, cursor: "pointer" }}
+              >
+                Lançar na Mesa {String(selectedTable).padStart(2, '0')}
+              </button>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );
