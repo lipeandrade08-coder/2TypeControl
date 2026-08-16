@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useMemo, useState, useEffect, useRef } from "react";
+import { ThemeToggle } from "../components/theme-toggle";
 
 type View =
   | "Visão geral"
@@ -718,7 +719,7 @@ export function RestaurantDashboard() {
     <div className="app-shell">
       <aside className={`sidebar ${mobileMenu ? "sidebar-open" : ""}`}>
         <button className="brand" type="button" onClick={() => chooseView("Visão geral")} style={{ padding: "8px 16px", background: "transparent", border: 0, cursor: "pointer", display: "flex", alignItems: "center" }}>
-          <img src="/2type-control-assets/logos/svg/logo-horizontal-white.svg" alt="2Type Control" style={{ height: 26, width: "auto" }} />
+          <img src="/logopng.png" alt="2Type Control" className="main-logo" style={{ width: "100%", height: "auto", maxHeight: 110, objectFit: "contain" }} />
         </button>
 
         <div style={{ position: "relative" }}>
@@ -738,7 +739,7 @@ export function RestaurantDashboard() {
                   setWaiters(initialWaiters);
                   setShowUnitSwitcher(false); 
                   notify("Unidade Matriz carregada."); 
-                }} style={{ padding: "8px 12px", background: activeUnit === "Matriz" ? "rgba(139,92,246,0.1)" : "transparent", border: 0, color: "white", borderRadius: 6, textAlign: "left", cursor: "pointer" }}>Unidade Matriz</button>
+                }} style={{ padding: "8px 12px", background: activeUnit === "Matriz" ? "var(--purple-soft)" : "transparent", border: 0, color: "var(--ink)", borderRadius: 6, textAlign: "left", cursor: "pointer" }}>Unidade Matriz</button>
                 <button type="button" onClick={() => { 
                   setActiveUnit("Jardins");
                   setOrders(initialJardinsOrders);
@@ -746,7 +747,7 @@ export function RestaurantDashboard() {
                   setWaiters(initialJardinsWaiters);
                   setShowUnitSwitcher(false); 
                   notify("Unidade Jardins carregada."); 
-                }} style={{ padding: "8px 12px", background: activeUnit === "Jardins" ? "rgba(139,92,246,0.1)" : "transparent", border: 0, color: "white", borderRadius: 6, textAlign: "left", cursor: "pointer" }}>Unidade Jardins</button>
+                }} style={{ padding: "8px 12px", background: activeUnit === "Jardins" ? "var(--purple-soft)" : "transparent", border: 0, color: "var(--ink)", borderRadius: 6, textAlign: "left", cursor: "pointer" }}>Unidade Jardins</button>
               </div>
             </>
           )}
@@ -816,6 +817,7 @@ export function RestaurantDashboard() {
             )}
           </div>
           <div className="topbar-actions">
+            <ThemeToggle />
             <label className="search-box">
               <span>⌕</span>
               <input ref={searchInputRef} aria-label="Buscar pedido ou cliente" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar pedido ou cliente..." />
@@ -832,10 +834,10 @@ export function RestaurantDashboard() {
                       <button type="button" onClick={() => setNotifications(n => n.map(x => ({ ...x, read: true })))} style={{ background: "transparent", border: 0, color: "var(--orange)", cursor: "pointer", fontSize: 11, fontWeight: 600 }}>Marcar todas como lidas</button>
                     </div>
                     {notifications.map(n => (
-                      <div key={n.id} style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", background: n.read ? "transparent" : "rgba(139,92,246,0.06)", display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer" }} onClick={() => setNotifications(ns => ns.map(x => x.id === n.id ? { ...x, read: true } : x))}>
+                      <div key={n.id} style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", background: n.read ? "transparent" : "var(--purple-soft)", display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer" }} onClick={() => setNotifications(ns => ns.map(x => x.id === n.id ? { ...x, read: true } : x))}>
                         <div style={{ width: 8, height: 8, borderRadius: "50%", background: n.read ? "transparent" : "var(--purple)", marginTop: 5, flexShrink: 0, border: n.read ? "1px solid var(--line)" : "none" }} />
                         <div style={{ flex: 1 }}>
-                          <p style={{ margin: 0, fontSize: 12, color: n.read ? "var(--muted)" : "white", lineHeight: 1.5 }}>{n.text}</p>
+                          <p style={{ margin: 0, fontSize: 12, color: n.read ? "var(--muted)" : "var(--ink)", lineHeight: 1.5 }}>{n.text}</p>
                           <small style={{ color: "var(--muted)", fontSize: 10 }}>{n.time}</small>
                         </div>
                       </div>
@@ -960,7 +962,7 @@ export function RestaurantDashboard() {
                 })}
               </div>
             </div>
-            <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(0,0,0,0.05)", background: "rgba(255,255,255,0.7)", borderRadius: "0 0 16px 16px", backdropFilter: "blur(10px)" }}>
+            <div style={{ padding: "16px 24px", borderTop: "1px solid var(--line)", background: "rgba(255,255,255,0.7)", borderRadius: "0 0 16px 16px", backdropFilter: "blur(10px)" }}>
               <button className="primary-button wide" type="button" onClick={confirmAddItems}>Confirmar Lançamento</button>
             </div>
           </section>
@@ -1007,12 +1009,12 @@ export function RestaurantDashboard() {
                   </div>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: 10, padding: "10px 14px", marginTop: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--purple-soft)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: 10, padding: "10px 14px", marginTop: 12 }}>
                   <span style={{ fontSize: 12, color: "var(--muted)" }}>Dividir conta</span>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <button type="button" onClick={() => setSplitCount(Math.max(1, splitCount - 1))} style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: 0, color: "white", cursor: "pointer", fontSize: 16, display: "grid", placeItems: "center" }}>−</button>
+                    <button type="button" onClick={() => setSplitCount(Math.max(1, splitCount - 1))} style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--surface-hover)", border: 0, color: "var(--ink)", cursor: "pointer", fontSize: 16, display: "grid", placeItems: "center" }}>−</button>
                     <span style={{ fontWeight: 700, fontSize: 14, minWidth: 24, textAlign: "center" }}>{splitCount}x</span>
-                    <button type="button" onClick={() => setSplitCount(splitCount + 1)} style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: 0, color: "white", cursor: "pointer", fontSize: 16, display: "grid", placeItems: "center" }}>+</button>
+                    <button type="button" onClick={() => setSplitCount(splitCount + 1)} style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--surface-hover)", border: 0, color: "var(--ink)", cursor: "pointer", fontSize: 16, display: "grid", placeItems: "center" }}>+</button>
                   </div>
                   {splitCount > 1 && (
                     <span style={{ fontSize: 12, color: "var(--green)", fontWeight: 700 }}>{formatMoney((table.total * 1.1 - appliedDiscount) / splitCount)}/pessoa</span>
@@ -1057,16 +1059,16 @@ export function RestaurantDashboard() {
             <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24 }}>
               <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                 <span>Nome do cliente</span>
-                <input required placeholder="Ex: Família Silva" value={reserveData.name} onChange={e => setReserveData({ ...reserveData, name: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "white", outline: "none" }} />
+                <input required placeholder="Ex: Família Silva" value={reserveData.name} onChange={e => setReserveData({ ...reserveData, name: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--ink)", outline: "none" }} />
               </label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Horário</span>
-                  <input required type="time" value={reserveData.time} onChange={e => setReserveData({ ...reserveData, time: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "white", outline: "none", colorScheme: "dark" }} />
+                  <input required type="time" value={reserveData.time} onChange={e => setReserveData({ ...reserveData, time: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--ink)", outline: "none", colorScheme: "dark" }} />
                 </label>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Pessoas</span>
-                  <input required type="number" min="1" max="20" value={reserveData.guests} onChange={e => setReserveData({ ...reserveData, guests: parseInt(e.target.value) || 1 })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "white", outline: "none" }} />
+                  <input required type="number" min="1" max="20" value={reserveData.guests} onChange={e => setReserveData({ ...reserveData, guests: parseInt(e.target.value) || 1 })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--ink)", outline: "none" }} />
                 </label>
               </div>
               <button className="primary-button wide" type="button" onClick={confirmReservation}>Confirmar Reserva</button>
@@ -1141,16 +1143,16 @@ function Overview({
           </div>
         </section>
 
-        <section className="panel insights-panel" style={{ background: "rgba(139,92,246,0.05)", border: "1px solid rgba(139,92,246,0.2)" }}>
+        <section className="panel insights-panel" style={{ background: "var(--purple-soft)", border: "1px solid rgba(139,92,246,0.2)" }}>
           <PanelHeader title="Insights da IA" subtitle="Análise em tempo real" action="Ver relatório" onAction={() => onView("Relatórios")} />
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
-            <div style={{ padding: 12, background: "rgba(0,0,0,0.2)", borderRadius: 8, borderLeft: "3px solid var(--orange)", fontSize: 13, lineHeight: 1.4 }}>
+            <div style={{ padding: 12, background: "var(--surface-hover)", borderRadius: 8, borderLeft: "3px solid var(--orange)", fontSize: 13, lineHeight: 1.4 }}>
               🤖 <strong>Oportunidade:</strong> Vendas de massas estão 30% abaixo da média nesta quinta-feira. Recomendamos ativar uma promoção relâmpago.
             </div>
-            <div style={{ padding: 12, background: "rgba(0,0,0,0.2)", borderRadius: 8, borderLeft: "3px solid var(--green)", fontSize: 13, lineHeight: 1.4 }}>
+            <div style={{ padding: 12, background: "var(--surface-hover)", borderRadius: 8, borderLeft: "3px solid var(--green)", fontSize: 13, lineHeight: 1.4 }}>
               🤖 <strong>Atenção ao Salão:</strong> A Mesa 04 está há 1h40 sem pedir sobremesa. Boa hora para o garçom oferecer!
             </div>
-            <div style={{ padding: 12, background: "rgba(0,0,0,0.2)", borderRadius: 8, borderLeft: "3px solid var(--blue)", fontSize: 13, lineHeight: 1.4 }}>
+            <div style={{ padding: 12, background: "var(--surface-hover)", borderRadius: 8, borderLeft: "3px solid var(--blue)", fontSize: 13, lineHeight: 1.4 }}>
               🤖 <strong>CRM:</strong> Camila Rocha pediu 14x, mas não pede há 2 semanas. Enviar cupom automático de saudade?
             </div>
           </div>
@@ -1252,11 +1254,11 @@ function OrdersView({ orders, filter, onFilter, onAdvance, onOpenFee, onNotify, 
             <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24 }}>
               <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                 <span>Nome do cliente</span>
-                <input required placeholder="Ex: João Silva" value={localNewOrder.customer} onChange={e => setLocalNewOrder({ ...localNewOrder, customer: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+                <input required placeholder="Ex: João Silva" value={localNewOrder.customer} onChange={e => setLocalNewOrder({ ...localNewOrder, customer: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
               </label>
               <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                 <span>Canal</span>
-                <select value={localNewOrder.channel} onChange={e => setLocalNewOrder({ ...localNewOrder, channel: e.target.value as "WhatsApp" | "Site" | "Salão" })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }}>
+                <select value={localNewOrder.channel} onChange={e => setLocalNewOrder({ ...localNewOrder, channel: e.target.value as "WhatsApp" | "Site" | "Salão" })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }}>
                   <option value="WhatsApp">WhatsApp</option>
                   <option value="Site">Site</option>
                   <option value="Salão">Salão</option>
@@ -1264,11 +1266,11 @@ function OrdersView({ orders, filter, onFilter, onAdvance, onOpenFee, onNotify, 
               </label>
               <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                 <span>Itens do pedido</span>
-                <input required placeholder="Ex: 2 pizzas • 1 refrigerante" value={localNewOrder.detail} onChange={e => setLocalNewOrder({ ...localNewOrder, detail: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+                <input required placeholder="Ex: 2 pizzas • 1 refrigerante" value={localNewOrder.detail} onChange={e => setLocalNewOrder({ ...localNewOrder, detail: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
               </label>
               <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                 <span>Total estimado (R$)</span>
-                <input type="number" step="0.01" min="0" placeholder="0,00" value={localNewOrder.total} onChange={e => setLocalNewOrder({ ...localNewOrder, total: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+                <input type="number" step="0.01" min="0" placeholder="0,00" value={localNewOrder.total} onChange={e => setLocalNewOrder({ ...localNewOrder, total: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
               </label>
               <button className="primary-button wide" type="button" onClick={handleCreateOrder}>Criar Pedido</button>
             </div>
@@ -1466,7 +1468,7 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
                 <small>{table.status === "Reservada" ? table.time : table.status === "Livre" ? `${table.seats} lugares` : getOccupancyText(table.status)}</small>
                 {table.status === "Reservada" && table.reservedFor && !isEditingMap && <b style={{ fontSize: 9, color: "var(--purple)", display: "block", marginTop: 2 }}>{table.reservedFor}</b>}
                 {table.guests > 0 && <b>{table.guests} pessoas</b>}
-                {isEditingMap && <div className="edit-overlay" style={{ position: "absolute", inset: 0, background: "rgba(229,109,53,0.3)", borderRadius: "inherit", zIndex: 20, display: "grid", placeItems: "center", opacity: draggingTable === table.number ? 1 : 0.4 }}><span style={{ color: "white", fontSize: "16px" }}>{draggingTable === table.number ? "✋" : "✏️"}</span></div>}
+                {isEditingMap && <div className="edit-overlay" style={{ position: "absolute", inset: 0, background: "var(--orange-soft)", borderRadius: "inherit", zIndex: 20, display: "grid", placeItems: "center", opacity: draggingTable === table.number ? 1 : 0.4 }}><span style={{ color: "var(--ink)", fontSize: "16px" }}>{draggingTable === table.number ? "✋" : "✏️"}</span></div>}
               </button>
             );
           })}
@@ -1495,7 +1497,7 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
           {assignWaiterTable === selected.number && (
             <div className="dropdown-menu" style={{ position: "absolute", top: "100%", right: "20px", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: "10px", padding: "8px", zIndex: 100, width: "200px", boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}>
               {waiters.map(w => (
-                <button key={w.id} type="button" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "8px", background: "transparent", border: "0", cursor: "pointer", borderRadius: "6px", textAlign: "left", color: "white" }} onClick={() => { onUpdateTable({ ...selected, waiterId: w.id }); setAssignWaiterTable(null); onNotify(`${w.name} atribuído à Mesa ${selected.number}`); }}>
+                <button key={w.id} type="button" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "8px", background: "transparent", border: "0", cursor: "pointer", borderRadius: "6px", textAlign: "left", color: "var(--ink)" }} onClick={() => { onUpdateTable({ ...selected, waiterId: w.id }); setAssignWaiterTable(null); onNotify(`${w.name} atribuído à Mesa ${selected.number}`); }}>
                   <span className={`avatar ${w.color}`} style={{ width: "24px", height: "24px", fontSize: "9px" }}>{w.initials}</span>
                   <span style={{ fontSize: "11px", fontWeight: 600 }}>{w.name}</span>
                 </button>
@@ -1532,7 +1534,7 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
             <div style={{ padding: "20px" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px" }}>
                 {waiters.map(w => (
-                  <div key={w.id} style={{ display: "flex", alignItems: "center", gap: "12px", background: "rgba(255,255,255,0.03)", padding: "10px", borderRadius: "8px" }}>
+                  <div key={w.id} style={{ display: "flex", alignItems: "center", gap: "12px", background: "var(--surface)", padding: "10px", borderRadius: "8px" }}>
                     <span className={`avatar ${w.color}`}>{w.initials}</span>
                     <span style={{ flex: 1, fontSize: "14px", fontWeight: "600" }}>{w.name}</span>
                     <button type="button" style={{ border: 0, background: "transparent", color: "var(--orange)", cursor: "pointer", fontSize: "12px" }} onClick={() => { onWaitersUpdate(waiters.filter(wa => wa.id !== w.id)); onNotify("Garçom removido."); }}>Remover</button>
@@ -1583,7 +1585,7 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
                         <input type="number" className="modal-input" value={t.height} onChange={(e) => onUpdateTable({ ...t, height: parseInt(e.target.value) || 76 })} />
                       </div>
                     </div>
-                    <button type="button" className="ghost-button wide" style={{ color: "var(--orange)", borderColor: "rgba(229,109,53,0.3)", marginTop: "10px" }} onClick={() => { onRemoveTable(t.number); setEditingTableNumber(null); onNotify("Mesa removida com sucesso."); }}>Apagar Mesa</button>
+                    <button type="button" className="ghost-button wide" style={{ color: "var(--orange)", borderColor: "var(--orange-soft)", marginTop: "10px" }} onClick={() => { onRemoveTable(t.number); setEditingTableNumber(null); onNotify("Mesa removida com sucesso."); }}>Apagar Mesa</button>
                     <button type="button" className="primary-button wide" onClick={() => setEditingTableNumber(null)}>Concluir</button>
                   </div>
                 );
@@ -1666,12 +1668,12 @@ function MenuView({ menuItems, setMenuItems, onNotify }: { menuItems: MenuItem[]
             <form onSubmit={handleAddItem} style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24, textAlign: "left" }}>
               <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                 <span>Nome do Prato</span>
-                <input required placeholder="Ex: Pizza Quatro Queijos" value={newItem.name || ""} onChange={e => setNewItem({...newItem, name: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+                <input required placeholder="Ex: Pizza Quatro Queijos" value={newItem.name || ""} onChange={e => setNewItem({...newItem, name: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
               </label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Categoria</span>
-                  <select value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }}>
+                  <select value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }}>
                     <option value="Pizzas">Pizzas</option>
                     <option value="Pratos">Pratos</option>
                     <option value="Massas">Massas</option>
@@ -1681,12 +1683,12 @@ function MenuView({ menuItems, setMenuItems, onNotify }: { menuItems: MenuItem[]
                 </label>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Preço (R$)</span>
-                  <input required type="number" step="0.01" min="0" placeholder="0.00" value={newItem.price || ""} onChange={e => setNewItem({...newItem, price: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+                  <input required type="number" step="0.01" min="0" placeholder="0.00" value={newItem.price || ""} onChange={e => setNewItem({...newItem, price: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
                 </label>
               </div>
               <label className="fee-field" style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
                 <input type="checkbox" checked={newItem.available} onChange={e => setNewItem({...newItem, available: e.target.checked})} />
-                <span style={{ fontSize: "14px", color: "white" }}>Disponível imediatamente</span>
+                <span style={{ fontSize: "14px", color: "var(--ink)" }}>Disponível imediatamente</span>
               </label>
               <button className="primary-button wide" type="submit" style={{ marginTop: 8 }}>Adicionar ao Cardápio</button>
             </form>
@@ -1697,13 +1699,200 @@ function MenuView({ menuItems, setMenuItems, onNotify }: { menuItems: MenuItem[]
   );
 }
 
+const CITIES = [
+  { name: "Guaratinguetá, SP", lat: -22.8167, lng: -45.1925 },
+  { name: "São Paulo, SP", lat: -23.5505, lng: -46.6333 },
+  { name: "Rio de Janeiro, RJ", lat: -22.9068, lng: -43.1729 },
+  { name: "Curitiba, PR", lat: -25.4284, lng: -49.2733 },
+];
+
+function TelemetryMap() {
+  const [selectedCity, setSelectedCity] = useState(CITIES[0]);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const leafletMapRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !mapRef.current) return;
+
+    let mounted = true;
+    import('leaflet').then((LModule) => {
+      if (!mounted) return;
+      const L = LModule.default || LModule;
+      
+      if (!leafletMapRef.current) {
+        if (!mapRef.current) return;
+        // Initialize map
+        leafletMapRef.current = L.map(mapRef.current, {
+          zoomControl: false,
+          attributionControl: false
+        }).setView([selectedCity.lat, selectedCity.lng], 13);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19
+        }).addTo(leafletMapRef.current);
+      } else {
+        leafletMapRef.current.setView([selectedCity.lat, selectedCity.lng], 13);
+      }
+
+      const map = leafletMapRef.current;
+      
+      // Clear existing layers (except tileLayer)
+      map.eachLayer((layer: any) => {
+        if (!layer._url) map.removeLayer(layer);
+      });
+
+      // Draw Range Rings (2km, 5km, 8km)
+      [2000, 5000, 8000].forEach(radius => {
+        L.circle([selectedCity.lat, selectedCity.lng], {
+          radius,
+          color: 'var(--purple)',
+          weight: 1.5,
+          fill: false,
+          dashArray: '4 6',
+          opacity: 0.4
+        }).addTo(map);
+      });
+
+      const offsets = [
+        { latOff: 0, lngOff: 0, intensity: 1, type: "center" },
+        { latOff: 0.01, lngOff: 0.02, intensity: 0.8, type: "hotspot" },
+        { latOff: -0.015, lngOff: -0.01, intensity: 0.6, type: "hotspot" },
+        { latOff: 0.02, lngOff: -0.015, intensity: 1.2, type: "hotspot" },
+        { latOff: -0.005, lngOff: 0.03, intensity: 0.5, type: "hotspot" },
+        { latOff: 0.005, lngOff: -0.025, intensity: 0.7, type: "hotspot" },
+        { latOff: -0.02, lngOff: 0.01, intensity: 0.4, type: "hotspot" },
+        { latOff: 0.015, lngOff: 0.005, intensity: 0.6, type: "hotspot" },
+        { latOff: 0.012, lngOff: 0.015, intensity: 1, type: "active", driver: "Carlos M.", eta: "8 min" },
+        { latOff: -0.008, lngOff: -0.012, intensity: 1, type: "active", driver: "Diego R.", eta: "18 min" },
+        { latOff: -0.018, lngOff: 0.022, intensity: 1, type: "active", driver: "André L.", eta: "24 min" },
+      ];
+
+      offsets.forEach((pt, i) => {
+        let html = '';
+        if (pt.type === "center") {
+          html = `<div style="position:relative; width:0; height:0;">
+            <svg viewBox="0 0 100 100" width="800" height="800" style="position:absolute; top:-400px; left:-400px; pointer-events:none;">
+              <g class="radar-sweep-container" style="transform-origin: 50% 50%">
+                <path d="M50 50 L50 5 A45 45 0 0 1 95 50 Z" fill="var(--purple)" opacity="0.15" />
+              </g>
+            </svg>
+            <svg viewBox="0 0 100 100" width="40" height="40" style="position:absolute; top:-20px; left:-20px;">
+              <circle cx="50" cy="50" r="15" fill="var(--purple)" opacity="0.4" class="pulse-slow" />
+              <circle cx="50" cy="50" r="6" fill="var(--purple)" />
+              <circle cx="50" cy="50" r="30" fill="none" stroke="var(--purple)" stroke-width="1.5" class="ping" />
+            </svg>
+          </div>`;
+        } else if (pt.type === "hotspot") {
+          const size = pt.intensity * 80;
+          html = `<div style="position:relative; width:0; height:0;">
+            <svg viewBox="0 0 100 100" width="${size}" height="${size}" style="position:absolute; top:-${size/2}px; left:-${size/2}px; mix-blend-mode: screen; filter: blur(4px);">
+              <defs>
+                <radialGradient id="heat-${i}" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="var(--orange)" stopOpacity="0.8" />
+                  <stop offset="30%" stopColor="var(--orange)" stopOpacity="0.5" />
+                  <stop offset="70%" stopColor="rgba(255,100,0,0.2)" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="rgba(255,0,0,0)" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+              <circle cx="50" cy="50" r="50" fill="url(#heat-${i})" class="pulse-random" style="animation-delay: ${(i % 5) * 0.5}s" />
+            </svg>
+          </div>`;
+        } else if (pt.type === "active") {
+          html = `<div style="position:relative; width:0; height:0; cursor:pointer;" class="active-delivery-marker">
+            <svg viewBox="0 0 100 100" width="48" height="48" style="position:absolute; top:-24px; left:-24px;">
+              <defs>
+                <filter id="glow-${i}">
+                  <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                  <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              <circle cx="50" cy="50" r="15" fill="var(--green)" opacity="0.2" class="pulse-fast" />
+              <circle cx="50" cy="50" r="8" fill="var(--panel)" stroke="var(--green)" stroke-width="2.5" filter="url(#glow-${i})" />
+              <circle cx="50" cy="50" r="30" fill="none" stroke="var(--green)" stroke-width="1" class="ping" style="animation-delay: ${(i % 3) * 0.3}s" />
+              <circle cx="50" cy="50" r="3" fill="var(--green)" />
+            </svg>
+            <div class="delivery-tooltip" style="position:absolute; top:-38px; left:50%; transform:translateX(-50%); background:var(--panel); border:1px solid rgba(0, 230, 118, 0.4); color:var(--ink); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.5); display:flex; align-items:center; gap:6px;">
+              <span style="display:flex; align-items:center; justify-content:center; background:var(--green); color:var(--panel); width:16px; height:16px; border-radius:50%; font-size:10px;">🛵</span>
+              <div style="display:flex; flex-direction:column; line-height:1.2;">
+                <span>${pt.driver}</span>
+                <span style="color:var(--green); font-size:9px;">${pt.eta}</span>
+              </div>
+            </div>
+          </div>`;
+        }
+
+        const icon = L.divIcon({
+          html,
+          className: 'custom-leaflet-icon',
+          iconSize: [0, 0],
+          iconAnchor: [0, 0]
+        });
+
+        L.marker([selectedCity.lat + pt.latOff, selectedCity.lng + pt.lngOff], { icon }).addTo(map);
+      });
+
+    });
+
+    return () => { mounted = false; };
+  }, [selectedCity]);
+
+  return (
+    <div className="telemetry-map-container panel">
+      <div className="telemetry-header">
+        <div className="telemetry-title">
+          <span className="live-indicator"></span>
+          <div>
+            <strong>Telemetria & Alcance</strong>
+            <small>Mapa de calor de entregas e entregadores ativos</small>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <select 
+            className="city-select"
+            value={selectedCity.name}
+            onChange={(e) => {
+              const city = CITIES.find(c => c.name === e.target.value);
+              if (city) setSelectedCity(city);
+            }}
+          >
+            {CITIES.map(c => (
+              <option key={c.name} value={c.name}>{c.name}</option>
+            ))}
+          </select>
+          <div className="telemetry-legend">
+            <span><span className="legend-dot hotspot"></span> Alta demanda</span>
+            <span><span className="legend-dot active"></span> Em rota</span>
+          </div>
+        </div>
+      </div>
+      <div className="telemetry-map">
+        <div ref={mapRef} style={{ width: '100%', height: '100%', background: '#0a0a0f' }}></div>
+      </div>
+    </div>
+  );
+}
+
 function DeliveryView({ pendingFee, onOpenFee, onNotify }: { pendingFee?: Order; onOpenFee: () => void; onNotify: (message: string) => void }) {
   const [routesConnected, setRoutesConnected] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  
   return (
     <div className="page-content">
       {pendingFee && <section className="attention-banner"><span className="attention-icon">!</span><div><strong>1 pedido precisa da taxa de entrega</strong><p>Revise a distância e confirme o valor antes de enviar para a cozinha.</p></div><button type="button" onClick={onOpenFee}>Resolver agora <span>→</span></button></section>}
+      
+      {showMap && <TelemetryMap />}
+      
       <div className="delivery-grid">
-        <section className="panel live-deliveries"><PanelHeader title="Entregas em andamento" subtitle="3 entregadores em rota" action="Ver mapa" onAction={() => onNotify("Carregando mapa em tempo real...")} />
+        <section className="panel live-deliveries">
+          <PanelHeader 
+            title="Entregas em andamento" 
+            subtitle="3 entregadores em rota" 
+            action={showMap ? "Ocultar mapa" : "Ver mapa"} 
+            onAction={() => setShowMap(!showMap)} 
+          />
           {[{id:1047,name:"Ana Luiza",driver:"Carlos M.",eta:"8 min",progress:78},{id:1046,name:"Camila Rocha",driver:"Diego R.",eta:"18 min",progress:54},{id:1043,name:"Paulo Nunes",driver:"André L.",eta:"24 min",progress:31}].map((delivery) => <article className="delivery-row" key={delivery.id}><span className="driver-avatar">➜</span><span><strong>#{delivery.id} • {delivery.name}</strong><small>{delivery.driver} • a caminho</small><i><b style={{width:`${delivery.progress}%`}} /></i></span><span><small>Previsão</small><strong>{delivery.eta}</strong></span></article>)}
         </section>
         <section className="panel delivery-rules"><PanelHeader title="Regras de entrega" subtitle="Valores usados pela IA e pelo site" action="Editar" onAction={() => onNotify("Configurações de entrega abertas.")} />
@@ -1807,11 +1996,11 @@ function ReportsView() {
               const percentage = Math.round((amount / currentTotalExpenses) * 100);
               return (
                 <div key={category} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "white" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "var(--ink)" }}>
                     <span>{category}</span>
                     <strong style={{ color: "var(--orange)" }}>{formatMoney(amount)} ({percentage}%)</strong>
                   </div>
-                  <div style={{ height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 4, overflow: "hidden" }}>
+                  <div style={{ height: 6, background: "var(--surface)", borderRadius: 4, overflow: "hidden" }}>
                     <div style={{ height: "100%", width: `${percentage}%`, background: "var(--orange)" }} />
                   </div>
                 </div>
@@ -1832,14 +2021,14 @@ function ReportsView() {
               <strong style={{ color: "var(--orange)" }}>- {formatMoney(currentTotalExpenses)}</strong>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 4 }}>
-              <span style={{ color: "white", fontWeight: 600 }}>Lucro Líquido Real</span>
+              <span style={{ color: "var(--ink)", fontWeight: 600 }}>Lucro Líquido Real</span>
               <strong style={{ color: netIncome > 0 ? "var(--green)" : "var(--orange)", fontSize: "18px" }}>
                 {formatMoney(netIncome)}
               </strong>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 4 }}>
               <span style={{ color: "var(--muted)", fontSize: "11px" }}>Margem de Lucro</span>
-              <strong style={{ color: "white", fontSize: "11px" }}>{((netIncome / totalRevenue) * 100).toFixed(1)}%</strong>
+              <strong style={{ color: "var(--ink)", fontSize: "11px" }}>{((netIncome / totalRevenue) * 100).toFixed(1)}%</strong>
             </div>
           </div>
         </section>
@@ -1893,13 +2082,13 @@ function ReportsView() {
             <form onSubmit={handleAddExpense} style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24, textAlign: "left" }}>
               <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                 <span>Descrição da Despesa</span>
-                <input required placeholder="Ex: Compra de Hortifruti" value={newExpense.description || ""} onChange={e => setNewExpense({...newExpense, description: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+                <input required placeholder="Ex: Compra de Hortifruti" value={newExpense.description || ""} onChange={e => setNewExpense({...newExpense, description: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
               </label>
               
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Categoria</span>
-                  <select value={newExpense.category} onChange={e => setNewExpense({...newExpense, category: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }}>
+                  <select value={newExpense.category} onChange={e => setNewExpense({...newExpense, category: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }}>
                     <option value="Ingredientes">Ingredientes</option>
                     <option value="Funcionários">Funcionários</option>
                     <option value="Contas">Contas Fixas</option>
@@ -1909,18 +2098,18 @@ function ReportsView() {
                 </label>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Data</span>
-                  <input required type="date" value={newExpense.date || ""} onChange={e => setNewExpense({...newExpense, date: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none", colorScheme: "dark" }} />
+                  <input required type="date" value={newExpense.date || ""} onChange={e => setNewExpense({...newExpense, date: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none", colorScheme: "dark" }} />
                 </label>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Valor (R$)</span>
-                  <input required type="number" step="0.01" min="0" placeholder="0.00" value={newExpense.amount || ""} onChange={e => setNewExpense({...newExpense, amount: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }} />
+                  <input required type="number" step="0.01" min="0" placeholder="0.00" value={newExpense.amount || ""} onChange={e => setNewExpense({...newExpense, amount: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
                 </label>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Status</span>
-                  <select value={newExpense.status} onChange={e => setNewExpense({...newExpense, status: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "white", outline: "none" }}>
+                  <select value={newExpense.status} onChange={e => setNewExpense({...newExpense, status: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }}>
                     <option value="Pago">Pago</option>
                     <option value="Pendente">Pendente</option>
                   </select>
@@ -2139,7 +2328,7 @@ function IntegrationsView() {
             <span className="crm-badge new">Conectado</span>
           </div>
           <div>
-            <h3 style={{ margin: "8px 0 4px", fontSize: "14px", color: "white" }}>iFood</h3>
+            <h3 style={{ margin: "8px 0 4px", fontSize: "14px", color: "var(--ink)" }}>iFood</h3>
             <p style={{ margin: "0", fontSize: "11px", color: "var(--muted)", lineHeight: 1.4 }}>Receba pedidos, atualize status e gerencie o cardápio diretamente por aqui.</p>
           </div>
           <button className="ghost-button" style={{ marginTop: "auto", width: "100%" }}>Configurar Integração</button>
@@ -2153,7 +2342,7 @@ function IntegrationsView() {
             <span className="crm-badge new">Ativo</span>
           </div>
           <div>
-            <h3 style={{ margin: "8px 0 4px", fontSize: "14px", color: "white" }}>WhatsApp Business API</h3>
+            <h3 style={{ margin: "8px 0 4px", fontSize: "14px", color: "var(--ink)" }}>WhatsApp Business API</h3>
             <p style={{ margin: "0", fontSize: "11px", color: "var(--muted)", lineHeight: 1.4 }}>Automação de chat, botões de ação e inteligência artificial para pedidos.</p>
           </div>
           <button className="ghost-button" style={{ marginTop: "auto", width: "100%" }}>Desconectar</button>
@@ -2161,13 +2350,13 @@ function IntegrationsView() {
 
         <div className="integration-card" style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: "14px", padding: "20px", display: "flex", flexDirection: "column", gap: "12px", opacity: 0.7 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", padding: "8px" }}>
+            <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", padding: "8px" }}>
               <Icon name="entregas" />
             </div>
             <span className="crm-badge">Não conectado</span>
           </div>
           <div>
-            <h3 style={{ margin: "8px 0 4px", fontSize: "14px", color: "white" }}>Loggi / Bee Delivery</h3>
+            <h3 style={{ margin: "8px 0 4px", fontSize: "14px", color: "var(--ink)" }}>Loggi / Bee Delivery</h3>
             <p style={{ margin: "0", fontSize: "11px", color: "var(--muted)", lineHeight: 1.4 }}>Encontre motoboys automaticamente e calcule a taxa de entrega.</p>
           </div>
           <button className="primary-button" style={{ marginTop: "auto", width: "100%" }}>Conectar</button>
@@ -2183,7 +2372,7 @@ function KdsView({ orders, onAdvance, onExit }: { orders: Order[], onAdvance: (i
     <div className="kds-layout">
       <header style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: "var(--orange)" }}>Monitor de Cozinha (KDS)</h1>
-        <button className="ghost-button" type="button" onClick={onExit} style={{ background: "rgba(255,255,255,0.1)", border: 0, color: "white", padding: "8px 16px", borderRadius: 8, cursor: "pointer" }}>← Voltar ao Sistema</button>
+        <button className="ghost-button" type="button" onClick={onExit} style={{ background: "var(--surface-hover)", border: 0, color: "var(--ink)", padding: "8px 16px", borderRadius: 8, cursor: "pointer" }}>← Voltar ao Sistema</button>
       </header>
       <div className="kds-grid">
         {pendingOrders.length === 0 && <p style={{ color: "#666" }}>Nenhum pedido na fila.</p>}
@@ -2213,16 +2402,16 @@ function ClientMenuSimulator({ tableNum, onClose, menuItems, onPlaceOrder }: { t
         <header style={{ background: "var(--orange)", padding: "16px", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ width: 32 }} />
           <div>
-            <h2 style={{ color: "white", margin: 0, fontSize: 18 }}>Mesa {tableNum}</h2>
-            <p style={{ margin: 0, fontSize: 12, color: "rgba(255,255,255,0.8)" }}>Autoatendimento</p>
+            <h2 style={{ color: "var(--ink)", margin: 0, fontSize: 18 }}>Mesa {tableNum}</h2>
+            <p style={{ margin: 0, fontSize: 12, color: "var(--muted)" }}>Autoatendimento</p>
           </div>
-          <button style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.2)", border: 0, color: "white", fontWeight: 700, fontSize: 18, cursor: "pointer", display: "grid", placeItems: "center" }} onClick={onClose}>×</button>
+          <button style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--surface-hover)", border: 0, color: "var(--ink)", fontWeight: 700, fontSize: 18, cursor: "pointer", display: "grid", placeItems: "center" }} onClick={onClose}>×</button>
         </header>
         <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
           {menuItems.map(item => (
             <div key={item.name} style={{ background: "#222", padding: 16, borderRadius: 12, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <strong style={{ color: "white", display: "block", fontSize: 14 }}>{item.name}</strong>
+                <strong style={{ color: "var(--ink)", display: "block", fontSize: 14 }}>{item.name}</strong>
                 <span style={{ color: "var(--orange)", fontSize: 14, fontWeight: 700 }}>{formatMoney(item.price)}</span>
               </div>
               <button style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--purple)", border: 0, color: "white", fontWeight: 700, cursor: "pointer", display: "grid", placeItems: "center" }} onClick={() => {
@@ -2235,7 +2424,7 @@ function ClientMenuSimulator({ tableNum, onClose, menuItems, onPlaceOrder }: { t
         </div>
         {cart.length > 0 && (
           <div style={{ padding: 20, background: "#222", borderTop: "1px solid #333" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, color: "white" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, color: "var(--ink)" }}>
               <span style={{ fontSize: 14 }}>Total do pedido:</span>
               <strong style={{ fontSize: 16 }}>{formatMoney(cart.reduce((a, b) => a + b.price * b.quantity, 0))}</strong>
             </div>
@@ -2290,7 +2479,7 @@ function WaiterView({
               <span>←</span> Voltar
             </button>
           ) : (
-            <div style={{ color: "white", fontSize: 18, fontWeight: 600 }}>Atendimento</div>
+            <div style={{ color: "var(--ink)", fontSize: 18, fontWeight: 600 }}>Atendimento</div>
           )}
           <button onClick={onExit} style={{ background: "transparent", border: 0, color: "var(--red)", fontSize: 14, cursor: "pointer" }}>Sair</button>
         </div>
@@ -2304,13 +2493,13 @@ function WaiterView({
                   key={t.number}
                   onClick={() => setSelectedTable(t.number)}
                   style={{
-                    background: t.status === "Ocupada" ? "rgba(139,92,246,0.15)" : "var(--panel)",
+                    background: t.status === "Ocupada" ? "var(--purple-soft)" : "var(--panel)",
                     border: `1px solid ${t.status === "Ocupada" ? "var(--purple)" : "var(--line)"}`,
                     borderRadius: 12,
                     padding: 16,
                     textAlign: "center",
                     cursor: "pointer",
-                    color: "white"
+                    color: "var(--ink)"
                   }}
                 >
                   <div style={{ fontSize: 24, fontWeight: 700 }}>Mesa {String(t.number).padStart(2, '0')}</div>
@@ -2323,9 +2512,9 @@ function WaiterView({
               {tableObj && tableObj.items && tableObj.items.length > 0 && (
                 <div style={{ marginBottom: 24 }}>
                   <div style={{ fontSize: 16, color: "var(--muted)", fontWeight: 600, marginBottom: 12, textTransform: "uppercase" }}>Conta Parcial</div>
-                  <div style={{ background: "rgba(139,92,246,0.1)", borderRadius: 12, padding: 16, border: "1px solid var(--purple)" }}>
+                  <div style={{ background: "var(--purple-soft)", borderRadius: 12, padding: 16, border: "1px solid var(--purple)" }}>
                     {tableObj.items.map((it, idx) => (
-                      <div key={idx} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, color: "white", fontSize: 14 }}>
+                      <div key={idx} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, color: "var(--ink)", fontSize: 14 }}>
                         <span>{it.quantity}x {it.name}</span>
                         <span>R$ {(it.price * it.quantity).toFixed(2)}</span>
                       </div>
@@ -2338,15 +2527,15 @@ function WaiterView({
                 </div>
               )}
 
-              <div style={{ fontSize: 20, color: "white", fontWeight: 600, marginBottom: 16 }}>Cardápio</div>
+              <div style={{ fontSize: 20, color: "var(--ink)", fontWeight: 600, marginBottom: 16 }}>Cardápio</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {menuItems.map(item => (
-                  <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--panel)", padding: 12, borderRadius: 8, border: "1px solid var(--line)" }}>
+                  <div key={item.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--panel)", padding: 12, borderRadius: 8, border: "1px solid var(--line)" }}>
                     <div>
-                      <div style={{ color: "white", fontSize: 14, fontWeight: 500 }}>{item.name}</div>
+                      <div style={{ color: "var(--ink)", fontSize: 14, fontWeight: 500 }}>{item.name}</div>
                       <div style={{ color: "var(--purple)", fontSize: 13 }}>R$ {item.price.toFixed(2)}</div>
                     </div>
-                    <button onClick={() => addToCart(item)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(139,92,246,0.2)", color: "var(--purple)", border: 0, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+                    <button onClick={() => addToCart(item)} style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--purple-soft)", color: "var(--purple)", border: 0, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
                   </div>
                 ))}
               </div>
@@ -2357,7 +2546,7 @@ function WaiterView({
         {/* Mobile Footer / Cart */}
         {selectedTable && (
           <div style={{ padding: 20, background: "var(--panel)", borderTop: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", color: "white" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", color: "var(--ink)" }}>
               <span style={{ fontSize: 14 }}>Itens ({cart.reduce((acc, c) => acc + c.quantity, 0)})</span>
               <strong style={{ fontSize: 18 }}>R$ {cartTotal.toFixed(2)}</strong>
             </div>
