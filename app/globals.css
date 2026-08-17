@@ -1045,3 +1045,8 @@ button:active { transform: scale(0.96); transition: transform 0.1s; }
   background: linear-gradient(90deg, var(--purple), #b388ff);
   border-radius: 0 2px 2px 0;
 }
+
+.main-content.no-sidebar { margin-left: 0; padding-top: 10px; }
+
+.main-content.no-sidebar.full-kiosk { margin-left: 0; padding: 0; height: 100vh; overflow: hidden; }
+.main-content.no-sidebar.full-kiosk .page-content { padding: 10px; height: 100%; overflow-y: auto; }

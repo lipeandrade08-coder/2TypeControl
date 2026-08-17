@@ -4,6 +4,9 @@ import Image from "next/image";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { ThemeToggle } from "../components/theme-toggle";
 
+
+export type AppRole = "admin" | "balcao" | "garcom" | "cozinha" | "entregador";
+
 type View =
   | "Visão geral"
   | "Pedidos"
@@ -15,7 +18,7 @@ type View =
   | "CRM"
   | "Integrações";
 
-type OrderStatus = "Novo" | "Confirmado" | "Em preparo" | "Pronto" | "Saiu";
+type OrderStatus = "Novo" | "Confirmado" | "Em preparo" | "Pronto" | "Saiu" | "Entregue";
 
 type Order = {
   id: number;
@@ -222,7 +225,7 @@ type ChatMessage = { side: "customer" | "ai" | "operator"; text: string; time: s
 type Conversation = { id: string; name: string; initials: string; message: string; time: string; unread: number; isVip?: boolean; history: ChatMessage[]; suggestion?: string };
 
 const initialConversations: Conversation[] = [
-  { 
+  {
     id: "c1", name: "Camila Rocha", initials: "CR", message: "Ótimo, muito obrigada!", time: "10:42", unread: 2, isVip: true,
     history: [
       { side: "customer", text: "Oi! Fiz o pedido #1046. Meu pedido já saiu para entrega?", time: "10:41" },
@@ -231,7 +234,7 @@ const initialConversations: Conversation[] = [
     ],
     suggestion: "Imagina, Camila! Qualquer dúvida estamos à disposição. Bom apetite! 🍕"
   },
-  { 
+  {
     id: "c2", name: "Lucas Mendes", initials: "LM", message: "Perfeito, obrigado!", time: "10:36", unread: 0,
     history: [
       { side: "customer", text: "Boa noite, vocês entregam no bairro Jardins?", time: "10:30" },
@@ -241,7 +244,7 @@ const initialConversations: Conversation[] = [
       { side: "customer", text: "Perfeito, obrigado!", time: "10:36" }
     ],
   },
-  { 
+  {
     id: "c3", name: "Beatriz Lima", initials: "BL", message: "Vocês têm opção sem lactose?", time: "10:31", unread: 1,
     history: [
       { side: "customer", text: "Boa noite! Vocês têm opção sem lactose nas pizzas?", time: "10:31" },
@@ -263,15 +266,15 @@ const initialMenuItems: MenuItem[] = [
 
 function AppIcon({ name }: { name: string }) {
   switch (name) {
-    case 'visao-geral': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 18V10M10 18V6M16 18v-4M22 18V3"/><path d="M3 21h20"/><path d="M4 10l6-4 6 8 6-11"/></svg>;
-    case 'pedidos': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 3.5h6M8 9h8M8 13h5M8 17h7"/></svg>;
-    case 'whatsapp': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4a8 8 0 0 0-7 11.8L4 20l4.4-1.1A8 8 0 1 0 12 4Z"/><path d="M9.1 8.6c.6 2.6 2.7 4.7 5.3 5.4l1.2-1.2M9.1 8.6 8 9.7"/></svg>;
-    case 'salao': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="6" height="5" rx="1.5"/><rect x="14" y="5" width="6" height="5" rx="1.5"/><rect x="4" y="14" width="6" height="5" rx="1.5"/><rect x="14" y="14" width="6" height="5" rx="1.5"/></svg>;
-    case 'cardapio': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M7 4h10a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>;
-    case 'entregas': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h11v10H3z"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>;
-    case 'crm': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="7" r="2.5"/><path d="M3 20c.5-4 2.6-6 5-6s4.5 2 5 6"/><path d="M14 13c3.5 0 5.5 2 6 5"/></svg>;
-    case 'relatorios': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20V10M10 20V5M16 20v-8M22 20V3"/><path d="M3 20h20"/></svg>;
-    case 'integracoes': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="14" width="8" height="8" rx="2" ry="2"/><rect x="14" y="2" width="8" height="8" rx="2" ry="2"/><path d="M6 14V6h8"/></svg>;
+    case 'visao-geral': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 18V10M10 18V6M16 18v-4M22 18V3" /><path d="M3 21h20" /><path d="M4 10l6-4 6 8 6-11" /></svg>;
+    case 'pedidos': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="3" width="14" height="18" rx="3" /><path d="M9 3.5h6M8 9h8M8 13h5M8 17h7" /></svg>;
+    case 'whatsapp': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4a8 8 0 0 0-7 11.8L4 20l4.4-1.1A8 8 0 1 0 12 4Z" /><path d="M9.1 8.6c.6 2.6 2.7 4.7 5.3 5.4l1.2-1.2M9.1 8.6 8 9.7" /></svg>;
+    case 'salao': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="6" height="5" rx="1.5" /><rect x="14" y="5" width="6" height="5" rx="1.5" /><rect x="4" y="14" width="6" height="5" rx="1.5" /><rect x="14" y="14" width="6" height="5" rx="1.5" /></svg>;
+    case 'cardapio': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M7 4h10a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" /><path d="M9 8h6M9 12h6M9 16h4" /></svg>;
+    case 'entregas': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h11v10H3z" /><path d="M14 10h4l3 3v4h-7z" /><circle cx="7" cy="18" r="2" /><circle cx="18" cy="18" r="2" /></svg>;
+    case 'crm': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="7" r="2.5" /><path d="M3 20c.5-4 2.6-6 5-6s4.5 2 5 6" /><path d="M14 13c3.5 0 5.5 2 6 5" /></svg>;
+    case 'relatorios': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20V10M10 20V5M16 20v-8M22 20V3" /><path d="M3 20h20" /></svg>;
+    case 'integracoes': return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="14" width="8" height="8" rx="2" ry="2" /><rect x="14" y="2" width="8" height="8" rx="2" ry="2" /><path d="M6 14V6h8" /></svg>;
     default: return <span>{name}</span>;
   }
 }
@@ -309,7 +312,7 @@ export function playSound(type: 'pop' | 'ding' | 'success') {
   if (!audioContextRef.current) {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     if (AudioContextClass) {
-       audioContextRef.current = new AudioContextClass();
+      audioContextRef.current = new AudioContextClass();
     }
   }
   const ctx = audioContextRef.current;
@@ -357,7 +360,7 @@ const initialJardinsOrders: Order[] = [
 
 const initialJardinsTables: Table[] = [
   { number: 1, seats: 4, status: "Livre", guests: 0, total: 0, items: [], x: 20, y: 30, width: 90, height: 70, area: "salao" },
-  { number: 2, seats: 4, status: "Ocupada", guests: 2, total: 58.0, time: "15 min", items: [{name: "Chopp", quantity: 2, price: 14}, {name: "Porção Batata", quantity: 1, price: 30}], x: 50, y: 30, width: 90, height: 70, area: "salao" },
+  { number: 2, seats: 4, status: "Ocupada", guests: 2, total: 58.0, time: "15 min", items: [{ name: "Chopp", quantity: 2, price: 14 }, { name: "Porção Batata", quantity: 1, price: 30 }], x: 50, y: 30, width: 90, height: 70, area: "salao" },
   { number: 3, seats: 2, status: "Livre", guests: 0, total: 0, items: [], x: 80, y: 30, width: 70, height: 60, area: "salao" },
 ];
 
@@ -365,8 +368,26 @@ const initialJardinsWaiters: Waiter[] = [
   { id: "w3", name: "Felipe Jardins", initials: "FJ", color: "var(--blue)" }
 ];
 
-export function RestaurantDashboard() {
-  const [activeView, setActiveView] = useState<View>("Visão geral");
+export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
+
+  // Navigation filtered by role
+  const filteredNavigation = useMemo(() => {
+    if (role === "admin") return navigation;
+    if (role === "balcao") return navigation.filter(n => ["Visão geral", "Pedidos", "WhatsApp", "Salão", "Entregas"].includes(n.label));
+    if (role === "garcom") return navigation.filter(n => ["Salão", "Cardápio"].includes(n.label));
+    if (role === "cozinha") return navigation.filter(n => ["Pedidos", "Cardápio"].includes(n.label));
+    return navigation;
+  }, [role]);
+
+  // Default view based on role
+  const defaultView = useMemo(() => {
+    if (role === "garcom") return "Salão";
+    if (role === "cozinha") return "Pedidos";
+    return "Visão geral";
+  }, [role]);
+
+  const [activeView, setActiveView] = useState<View>(defaultView);
+
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -419,7 +440,7 @@ export function RestaurantDashboard() {
   const [feeModal, setFeeModal] = useState(false);
   const [addItemModal, setAddItemModal] = useState(false);
   const [checkoutModal, setCheckoutModal] = useState(false);
-  const [cart, setCart] = useState<{name: string, quantity: number, price: number}[]>([]);
+  const [cart, setCart] = useState<{ name: string, quantity: number, price: number }[]>([]);
   const [discount, setDiscount] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState("");
@@ -584,13 +605,13 @@ export function RestaurantDashboard() {
       current.map((item) =>
         item.number === selectedTable
           ? {
-              ...item,
-              status: "Ocupada",
-              guests: item.guests || 2,
-              total: item.total + cart.reduce((acc, curr) => acc + curr.price * curr.quantity, 0),
-              time: item.time || "agora",
-              items: [...item.items, ...cart],
-            }
+            ...item,
+            status: "Ocupada",
+            guests: item.guests || 2,
+            total: item.total + cart.reduce((acc, curr) => acc + curr.price * curr.quantity, 0),
+            time: item.time || "agora",
+            items: [...item.items, ...cart],
+          }
           : item,
       ),
     );
@@ -666,22 +687,34 @@ export function RestaurantDashboard() {
     playSound('success');
   };
 
-  if (kdsMode) {
-    return <KdsView orders={orders} onAdvance={advanceOrder} onExit={() => setKdsMode(false)} />;
+
+  if (role === "entregador") {
+    return (
+      <DriverView
+        orders={orders}
+        onAdvance={advanceOrder}
+        onComplete={(id) => setOrders(curr => curr.map(o => o.id === id ? { ...o, status: "Entregue" } : o))}
+        onExit={() => window.location.href = "/"}
+      />
+    );
   }
 
-  if (waiterMode) {
+  if (role === "cozinha" || kdsMode) {
+    return <KdsView orders={orders} onAdvance={advanceOrder} onExit={() => role === "cozinha" ? (window.location.href = "/") : setKdsMode(false)} />;
+  }
+
+  if (role === "garcom" || waiterMode) {
     return (
-      <WaiterView 
-        tables={tables} 
+      <WaiterView
+        tables={tables}
         menuItems={menuItems}
-        onExit={() => setWaiterMode(false)}
+        onExit={() => role === "garcom" ? (window.location.href = "/") : setWaiterMode(false)}
         onAddItems={(tableNum, items) => {
           const totalToAdd = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-          
+
           setTables(current => current.map(t => {
             if (t.number !== tableNum) return t;
-            
+
             const newItems = [...(t.items || [])];
             items.forEach(newItem => {
               const existing = newItems.find(i => i.name === newItem.name);
@@ -691,7 +724,7 @@ export function RestaurantDashboard() {
                 newItems.push({ ...newItem });
               }
             });
-            
+
             return {
               ...t,
               status: "Ocupada",
@@ -699,7 +732,7 @@ export function RestaurantDashboard() {
               items: newItems
             };
           }));
-          
+
           const orderStr = items.map(i => `${i.quantity}x ${i.name}`).join(" • ");
           addOrder({
             id: 3000 + Math.floor(Math.random() * 1000),
@@ -717,7 +750,9 @@ export function RestaurantDashboard() {
 
   return (
     <div className="app-shell">
+
       <aside className={`sidebar ${mobileMenu ? "sidebar-open" : ""}`}>
+
         <button className="brand" type="button" onClick={() => chooseView("Visão geral")} style={{ padding: "8px 16px", background: "transparent", border: 0, cursor: "pointer", display: "flex", alignItems: "center" }}>
           <img src="/logopng.png" alt="2Type Control" className="main-logo" style={{ width: "100%", height: "auto", maxHeight: 110, objectFit: "contain" }} />
         </button>
@@ -732,21 +767,21 @@ export function RestaurantDashboard() {
             <>
               <div style={{ position: "fixed", inset: 0, zIndex: 100 }} onClick={() => setShowUnitSwitcher(false)} />
               <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 16, right: 16, background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 8, padding: 8, zIndex: 110, display: "flex", flexDirection: "column", gap: 4 }}>
-                <button type="button" onClick={() => { 
-                  setActiveUnit("Matriz"); 
+                <button type="button" onClick={() => {
+                  setActiveUnit("Matriz");
                   setOrders(initialOrders);
                   setTables([...initialTables, ...initialVarandaTables]);
                   setWaiters(initialWaiters);
-                  setShowUnitSwitcher(false); 
-                  notify("Unidade Matriz carregada."); 
+                  setShowUnitSwitcher(false);
+                  notify("Unidade Matriz carregada.");
                 }} style={{ padding: "8px 12px", background: activeUnit === "Matriz" ? "var(--purple-soft)" : "transparent", border: 0, color: "var(--ink)", borderRadius: 6, textAlign: "left", cursor: "pointer" }}>Unidade Matriz</button>
-                <button type="button" onClick={() => { 
+                <button type="button" onClick={() => {
                   setActiveUnit("Jardins");
                   setOrders(initialJardinsOrders);
                   setTables(initialJardinsTables);
                   setWaiters(initialJardinsWaiters);
-                  setShowUnitSwitcher(false); 
-                  notify("Unidade Jardins carregada."); 
+                  setShowUnitSwitcher(false);
+                  notify("Unidade Jardins carregada.");
                 }} style={{ padding: "8px 12px", background: activeUnit === "Jardins" ? "var(--purple-soft)" : "transparent", border: 0, color: "var(--ink)", borderRadius: 6, textAlign: "left", cursor: "pointer" }}>Unidade Jardins</button>
               </div>
             </>
@@ -754,7 +789,7 @@ export function RestaurantDashboard() {
         </div>
 
         <nav className="nav-list" aria-label="Navegação principal">
-          {navigation.map((item) => (
+          {filteredNavigation.map((item) => (
             <div key={item.label}>
               {item.group && <div className="nav-group">{item.group}</div>}
               <button
@@ -792,7 +827,7 @@ export function RestaurantDashboard() {
             <span style={{ fontSize: "14px" }}>{muted ? "🔇" : "🔊"}</span>
             <span style={{ flex: 1, color: "var(--muted)", textAlign: "left" }}>{muted ? "Sons mutados" : "Sons ativados"}</span>
           </button>
-          
+
           <button className="integration-card" type="button" onClick={() => chooseView("Integrações")}>
             <span className="integration-icon">⌁</span>
             <span><strong>Integrações</strong><small>3 de 4 conectadas</small></span>
@@ -800,7 +835,7 @@ export function RestaurantDashboard() {
           </button>
           <div className="user-card">
             <span className="user-avatar">RS</span>
-            <span><strong>Rafael Santos</strong><small>Administrador</small></span>
+            <span><strong>{role === "admin" ? "Rafael Santos" : role === "balcao" ? "Caixa Central" : role === "garcom" ? "Garçom" : "Cozinha"}</strong><small>{role === "admin" ? "Administrador" : role === "balcao" ? "Balconista" : role === "garcom" ? "Atendimento" : "Produção"}</small></span>
             <span className="more">•••</span>
           </div>
         </div>
@@ -847,8 +882,12 @@ export function RestaurantDashboard() {
               )}
             </div>
             <button className="live-status" type="button"><i /> Ao vivo</button>
-            <button className="primary-button" type="button" onClick={() => setWaiterMode(true)} style={{ marginLeft: 16, padding: "8px 12px", background: "var(--blue)" }}>📱 Modo Garçom</button>
-            <button className="primary-button" type="button" onClick={() => setKdsMode(true)} style={{ marginLeft: 8, padding: "8px 12px", background: "var(--orange)" }}>Modo Cozinha (KDS)</button>
+            {role === "admin" && (
+              <>
+                <button className="primary-button" type="button" onClick={() => setWaiterMode(true)} style={{ marginLeft: 16, padding: "8px 12px", background: "var(--blue)" }}>📱 Modo Garçom</button>
+                <button className="primary-button" type="button" onClick={() => setKdsMode(true)} style={{ marginLeft: 8, padding: "8px 12px", background: "var(--orange)" }}>Modo Cozinha (KDS)</button>
+              </>
+            )}
           </div>
         </header>
 
@@ -976,7 +1015,7 @@ export function RestaurantDashboard() {
             <button className="modal-close" type="button" aria-label="Fechar" onClick={() => setCheckoutModal(false)}>×</button>
             <p className="eyebrow orange">FECHAR CONTA</p>
             <h2 id="checkout-title">Mesa {String(selectedTable).padStart(2, "0")}</h2>
-            
+
             <div className="checkout-grid">
               <div>
                 <div className="checkout-list">
@@ -988,7 +1027,7 @@ export function RestaurantDashboard() {
                         <strong>{formatMoney(item.price * item.quantity)}</strong>
                       </div>
                     ))}
-                    {table.items.length === 0 && <div style={{textAlign: "center", padding: 20, color: "#999", fontSize: 10}}>Nenhum item consumido.</div>}
+                    {table.items.length === 0 && <div style={{ textAlign: "center", padding: 20, color: "#999", fontSize: 10 }}>Nenhum item consumido.</div>}
                   </div>
                 </div>
 
@@ -1109,7 +1148,7 @@ function Overview({
   onAdvance: (id: number) => void;
 }) {
   const occupied = tables.filter((table) => table.status === "Ocupada" || table.status === "Conta").length;
-  
+
   return (
     <div className="page-content overview-page">
       <section className="metric-grid">
@@ -1161,13 +1200,13 @@ function Overview({
         <section className="panel ai-panel">
           <PanelHeader title="IA no WhatsApp" subtitle="Atendimento automático" extra={<Toggle enabled={aiEnabled} onToggle={onToggleAi} />} />
           <div className="ai-status-row"><span className="spark">✦</span><span><strong>{aiEnabled ? "IA atendendo agora" : "IA pausada"}</strong><small>{aiEnabled ? "6 conversas ativas" : "Atendimento manual ativo"}</small></span><i /></div>
-          
+
           <div className="mini-chat">
             <div className="chat-meta"><span className="avatar coral">CR</span><div><strong>Camila Rocha</strong><small>há 1 min</small></div><span className="whatsapp-mini">💬</span></div>
             <div className="customer-message">Meu pedido já saiu para entrega?</div>
             <div className="ai-message"><span>✦</span><div><p>Oi, Camila! Seu pedido <b>#1048</b> saiu às 17:36 e chega em cerca de 18 min. 😊</p></div></div>
           </div>
-          
+
           <div className="ai-footer">
             <a href="#" onClick={(e) => { e.preventDefault(); onView("WhatsApp"); }}>Ver todas as conversas <span>→</span></a>
           </div>
@@ -1183,14 +1222,14 @@ function Overview({
           <div className="bottom-metric"><small>Ticket médio</small><strong>R$ 78,40</strong></div>
         </div>
         <svg className="bottom-chart-mock" viewBox="0 0 1000 120" preserveAspectRatio="none">
-           <defs>
-             <linearGradient id="grad-purple" x1="0" y1="0" x2="0" y2="1">
-               <stop offset="0%" stopColor="var(--purple)" stopOpacity="0.4" />
-               <stop offset="100%" stopColor="var(--purple)" stopOpacity="0" />
-             </linearGradient>
-           </defs>
-           <path d="M0,100 L100,90 L200,60 L300,110 L400,20 L500,40 L600,80 L700,50 L800,70 L900,30 L1000,10" fill="none" stroke="var(--purple)" strokeWidth="3" vectorEffect="non-scaling-stroke" />
-           <path d="M0,100 L100,90 L200,60 L300,110 L400,20 L500,40 L600,80 L700,50 L800,70 L900,30 L1000,10 L1000,120 L0,120 Z" fill="url(#grad-purple)" />
+          <defs>
+            <linearGradient id="grad-purple" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--purple)" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="var(--purple)" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d="M0,100 L100,90 L200,60 L300,110 L400,20 L500,40 L600,80 L700,50 L800,70 L900,30 L1000,10" fill="none" stroke="var(--purple)" strokeWidth="3" vectorEffect="non-scaling-stroke" />
+          <path d="M0,100 L100,90 L200,60 L300,110 L400,20 L500,40 L600,80 L700,50 L800,70 L900,30 L1000,10 L1000,120 L0,120 Z" fill="url(#grad-purple)" />
         </svg>
       </div>
     </div>
@@ -1348,17 +1387,17 @@ function WhatsAppView({ aiEnabled, onToggleAi, onNotify }: { aiEnabled: boolean;
       <aside className="chat-insights panel">
         <div className="insights-header"><span className="spark">✦</span><span><strong>Copiloto IA</strong><small>Contexto da conversa</small></span><Toggle enabled={aiEnabled} onToggle={onToggleAi} /></div>
         <div className="customer-summary"><span className={`avatar large ${activeChat.isVip ? "coral" : ""}`}>{activeChat.initials}</span><h3>{activeChat.name}</h3><p>{activeChat.isVip ? "7 pedidos • ticket médio R$ 73,40" : "1 pedido • cliente novo"}</p></div>
-        
+
         {activeChatId === "c1" && (
           <div className="insight-block"><small>PEDIDO ATUAL</small><div className="linked-order"><span><strong>#1046</strong><small>Saiu para entrega às 10:36</small></span><StatusBadge status="Saiu" /></div></div>
         )}
-        
+
         <div className="insight-block"><small>RESUMO DA IA</small><p>{activeChat.suggestion ? "O cliente fez uma pergunta. Sugiro uma resposta educada e rápida." : "Conversa resolvida ou aguardando cliente."}</p></div>
-        
+
         {activeChat.suggestion && (
           <div className="insight-block"><small>PRÓXIMA AÇÃO</small><button className="suggestion" type="button" onClick={useSuggestion}><span>✦</span><p>{activeChat.suggestion}</p><b>Usar resposta →</b></button></div>
         )}
-        
+
         <button className="ghost-button wide" type="button" onClick={() => onNotify("Atendimento assumido pelo operador.")}>Assumir atendimento</button>
       </aside>
     </div>
@@ -1431,7 +1470,7 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
               </>
             ) : (
               <>
-                <button className="ghost-button" type="button" onClick={() => setShowWaiterModal(true)}>Gerenciar Equipe</button>
+                <button className="ghost-button" type="button" onClick={() => setShowWaiterModal(true)}>Gerenciar Equipe</button>
                 <button className="ghost-button" type="button" onClick={() => setIsEditingMap(true)}>Editar mapa</button>
               </>
             )}
@@ -1443,10 +1482,10 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
           {floorTables.map((table) => {
             const waiter = waiters.find(w => w.id === table.waiterId);
             return (
-              <button 
-                className={`floor-table ${table.status.toLowerCase()} ${selected.number === table.number ? "selected" : ""}`} 
-                type="button" 
-                key={table.number} 
+              <button
+                className={`floor-table ${table.status.toLowerCase()} ${selected.number === table.number ? "selected" : ""}`}
+                type="button"
+                key={table.number}
                 style={{ left: `${table.x}%`, top: `${table.y}%`, width: `${table.width}px`, height: `${table.height}px`, transform: "translate(-50%, -50%)", position: "absolute" }}
                 onPointerDown={(e) => {
                   if (isEditingMap) {
@@ -1458,8 +1497,8 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
                   if (isEditingMap && draggingTable === null) {
                     setEditingTableNumber(table.number);
                   } else if (!isEditingMap) {
-                    playSound('pop'); 
-                    onSelect(table.number); 
+                    playSound('pop');
+                    onSelect(table.number);
                   }
                 }}
               >
@@ -1492,7 +1531,7 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
             </>
           )}
           <button type="button" onClick={() => setAssignWaiterTable(assignWaiterTable === selected.number ? null : selected.number)}>Trocar</button>
-          
+
           {/* Dropdown de Garçons */}
           {assignWaiterTable === selected.number && (
             <div className="dropdown-menu" style={{ position: "absolute", top: "100%", right: "20px", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: "10px", padding: "8px", zIndex: 100, width: "200px", boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}>
@@ -1541,7 +1580,7 @@ function DiningView({ tables, waiters, selected, onSelect, onAddItem, onClose, o
                   </div>
                 ))}
               </div>
-              
+
               <div style={{ padding: "16px", border: "1px dashed var(--line)", borderRadius: "10px" }}>
                 <h3 style={{ fontSize: "14px", marginBottom: "12px", color: "var(--muted)" }}>Adicionar novo</h3>
                 <input type="text" className="modal-input" placeholder="Nome completo" value={newWaiterName} onChange={(e) => setNewWaiterName(e.target.value)} style={{ marginBottom: "12px" }} />
@@ -1668,12 +1707,12 @@ function MenuView({ menuItems, setMenuItems, onNotify }: { menuItems: MenuItem[]
             <form onSubmit={handleAddItem} style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24, textAlign: "left" }}>
               <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                 <span>Nome do Prato</span>
-                <input required placeholder="Ex: Pizza Quatro Queijos" value={newItem.name || ""} onChange={e => setNewItem({...newItem, name: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
+                <input required placeholder="Ex: Pizza Quatro Queijos" value={newItem.name || ""} onChange={e => setNewItem({ ...newItem, name: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
               </label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Categoria</span>
-                  <select value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }}>
+                  <select value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }}>
                     <option value="Pizzas">Pizzas</option>
                     <option value="Pratos">Pratos</option>
                     <option value="Massas">Massas</option>
@@ -1683,11 +1722,11 @@ function MenuView({ menuItems, setMenuItems, onNotify }: { menuItems: MenuItem[]
                 </label>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Preço (R$)</span>
-                  <input required type="number" step="0.01" min="0" placeholder="0.00" value={newItem.price || ""} onChange={e => setNewItem({...newItem, price: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
+                  <input required type="number" step="0.01" min="0" placeholder="0.00" value={newItem.price || ""} onChange={e => setNewItem({ ...newItem, price: e.target.value as any })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
                 </label>
               </div>
               <label className="fee-field" style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
-                <input type="checkbox" checked={newItem.available} onChange={e => setNewItem({...newItem, available: e.target.checked})} />
+                <input type="checkbox" checked={newItem.available} onChange={e => setNewItem({ ...newItem, available: e.target.checked })} />
                 <span style={{ fontSize: "14px", color: "var(--ink)" }}>Disponível imediatamente</span>
               </label>
               <button className="primary-button wide" type="submit" style={{ marginTop: 8 }}>Adicionar ao Cardápio</button>
@@ -1718,7 +1757,7 @@ function TelemetryMap() {
     import('leaflet').then((LModule) => {
       if (!mounted) return;
       const L = LModule.default || LModule;
-      
+
       if (!leafletMapRef.current) {
         if (!mapRef.current) return;
         // Initialize map
@@ -1735,7 +1774,7 @@ function TelemetryMap() {
       }
 
       const map = leafletMapRef.current;
-      
+
       // Clear existing layers (except tileLayer)
       map.eachLayer((layer: any) => {
         if (!layer._url) map.removeLayer(layer);
@@ -1785,7 +1824,7 @@ function TelemetryMap() {
         } else if (pt.type === "hotspot") {
           const size = pt.intensity * 80;
           html = `<div style="position:relative; width:0; height:0;">
-            <svg viewBox="0 0 100 100" width="${size}" height="${size}" style="position:absolute; top:-${size/2}px; left:-${size/2}px; mix-blend-mode: screen; filter: blur(4px);">
+            <svg viewBox="0 0 100 100" width="${size}" height="${size}" style="position:absolute; top:-${size / 2}px; left:-${size / 2}px; mix-blend-mode: screen; filter: blur(4px);">
               <defs>
                 <radialGradient id="heat-${i}" cx="50%" cy="50%" r="50%">
                   <stop offset="0%" stopColor="var(--orange)" stopOpacity="0.8" />
@@ -1850,7 +1889,7 @@ function TelemetryMap() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-          <select 
+          <select
             className="city-select"
             value={selectedCity.name}
             onChange={(e) => {
@@ -1878,25 +1917,25 @@ function TelemetryMap() {
 function DeliveryView({ pendingFee, onOpenFee, onNotify }: { pendingFee?: Order; onOpenFee: () => void; onNotify: (message: string) => void }) {
   const [routesConnected, setRoutesConnected] = useState(false);
   const [showMap, setShowMap] = useState(false);
-  
+
   return (
     <div className="page-content">
       {pendingFee && <section className="attention-banner"><span className="attention-icon">!</span><div><strong>1 pedido precisa da taxa de entrega</strong><p>Revise a distância e confirme o valor antes de enviar para a cozinha.</p></div><button type="button" onClick={onOpenFee}>Resolver agora <span>→</span></button></section>}
-      
+
       {showMap && <TelemetryMap />}
-      
+
       <div className="delivery-grid">
         <section className="panel live-deliveries">
-          <PanelHeader 
-            title="Entregas em andamento" 
-            subtitle="3 entregadores em rota" 
-            action={showMap ? "Ocultar mapa" : "Ver mapa"} 
-            onAction={() => setShowMap(!showMap)} 
+          <PanelHeader
+            title="Entregas em andamento"
+            subtitle="3 entregadores em rota"
+            action={showMap ? "Ocultar mapa" : "Ver mapa"}
+            onAction={() => setShowMap(!showMap)}
           />
-          {[{id:1047,name:"Ana Luiza",driver:"Carlos M.",eta:"8 min",progress:78},{id:1046,name:"Camila Rocha",driver:"Diego R.",eta:"18 min",progress:54},{id:1043,name:"Paulo Nunes",driver:"André L.",eta:"24 min",progress:31}].map((delivery) => <article className="delivery-row" key={delivery.id}><span className="driver-avatar">➜</span><span><strong>#{delivery.id} • {delivery.name}</strong><small>{delivery.driver} • a caminho</small><i><b style={{width:`${delivery.progress}%`}} /></i></span><span><small>Previsão</small><strong>{delivery.eta}</strong></span></article>)}
+          {[{ id: 1047, name: "Ana Luiza", driver: "Carlos M.", eta: "8 min", progress: 78 }, { id: 1046, name: "Camila Rocha", driver: "Diego R.", eta: "18 min", progress: 54 }, { id: 1043, name: "Paulo Nunes", driver: "André L.", eta: "24 min", progress: 31 }].map((delivery) => <article className="delivery-row" key={delivery.id}><span className="driver-avatar">➜</span><span><strong>#{delivery.id} • {delivery.name}</strong><small>{delivery.driver} • a caminho</small><i><b style={{ width: `${delivery.progress}%` }} /></i></span><span><small>Previsão</small><strong>{delivery.eta}</strong></span></article>)}
         </section>
         <section className="panel delivery-rules"><PanelHeader title="Regras de entrega" subtitle="Valores usados pela IA e pelo site" action="Editar" onAction={() => onNotify("Configurações de entrega abertas.")} />
-          {[{range:"Até 2 km",fee:6.9,time:"20–30 min"},{range:"2 a 5 km",fee:9.9,time:"30–40 min"},{range:"5 a 8 km",fee:14.9,time:"40–55 min"}].map((rule) => <div className="rule-row" key={rule.range}><span className="rule-pin">⌖</span><span><strong>{rule.range}</strong><small>{rule.time}</small></span><strong>{formatMoney(rule.fee)}</strong></div>)}
+          {[{ range: "Até 2 km", fee: 6.9, time: "20–30 min" }, { range: "2 a 5 km", fee: 9.9, time: "30–40 min" }, { range: "5 a 8 km", fee: 14.9, time: "40–55 min" }].map((rule) => <div className="rule-row" key={rule.range}><span className="rule-pin">⌖</span><span><strong>{rule.range}</strong><small>{rule.time}</small></span><strong>{formatMoney(rule.fee)}</strong></div>)}
           <div className="auto-rate"><span>✦</span><div><strong>{routesConnected ? "Rotas Conectadas" : "Cálculo automático disponível"}</strong><p>{routesConnected ? "As taxas estão sendo calculadas automaticamente via integração." : "Conecte a geolocalização do site para sugerir a taxa pela distância."}</p></div><button type="button" onClick={() => { setRoutesConnected(true); onNotify(routesConnected ? "Rotas sincronizadas com sucesso." : "Integração de rotas ativada!"); }}>{routesConnected ? "Sincronizar" : "Conectar"}</button></div>
         </section>
       </div>
@@ -1922,13 +1961,13 @@ const initialExpenses: Expense[] = [
 
 function ReportsView() {
   const bars = [38, 44, 52, 46, 68, 74, 82, 58, 63, 71, 88, 76];
-  
+
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [expenseModal, setExpenseModal] = useState(false);
   const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: "Ingredientes", status: "Pago" });
 
   const totalRevenue = 86420;
-  const baseExpenses = 32540; 
+  const baseExpenses = 32540;
   const currentTotalExpenses = baseExpenses + expenses.reduce((acc, exp) => acc + exp.amount, 0);
   const netIncome = totalRevenue - currentTotalExpenses;
 
@@ -1983,7 +2022,7 @@ function ReportsView() {
             {bars.map((bar, i) => (
               <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
                 <div style={{ width: "100%", background: "var(--purple)", borderRadius: "4px 4px 0 0", height: `${bar}%`, minHeight: 4, transition: "height 0.3s ease", opacity: i === 11 ? 1 : 0.6 }} />
-                <span style={{ fontSize: 10, color: "var(--muted)" }}>{["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][i]}</span>
+                <span style={{ fontSize: 10, color: "var(--muted)" }}>{["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"][i]}</span>
               </div>
             ))}
           </div>
@@ -2008,7 +2047,7 @@ function ReportsView() {
             })}
           </div>
         </section>
-        
+
         <section className="panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
           <PanelHeader title="Demonstrativo de Lucro" subtitle="Resultado Líquido do Período" />
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
@@ -2054,11 +2093,10 @@ function ReportsView() {
                 <tr key={exp.id} className="spreadsheet-row">
                   <td><strong>{exp.description}</strong></td>
                   <td>
-                    <span className={`crm-badge ${
-                      exp.category === "Ingredientes" ? "recurrent" :
-                      exp.category === "Funcionários" ? "vip" :
-                      exp.category === "Contas" ? "risk" : "new"
-                    }`}>{exp.category}</span>
+                    <span className={`crm-badge ${exp.category === "Ingredientes" ? "recurrent" :
+                        exp.category === "Funcionários" ? "vip" :
+                          exp.category === "Contas" ? "risk" : "new"
+                      }`}>{exp.category}</span>
                   </td>
                   <td className="client-date">{exp.date}</td>
                   <td className="client-money" style={{ color: "var(--orange)" }}>- {formatMoney(exp.amount)}</td>
@@ -2082,13 +2120,13 @@ function ReportsView() {
             <form onSubmit={handleAddExpense} style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24, textAlign: "left" }}>
               <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                 <span>Descrição da Despesa</span>
-                <input required placeholder="Ex: Compra de Hortifruti" value={newExpense.description || ""} onChange={e => setNewExpense({...newExpense, description: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
+                <input required placeholder="Ex: Compra de Hortifruti" value={newExpense.description || ""} onChange={e => setNewExpense({ ...newExpense, description: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
               </label>
-              
+
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Categoria</span>
-                  <select value={newExpense.category} onChange={e => setNewExpense({...newExpense, category: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }}>
+                  <select value={newExpense.category} onChange={e => setNewExpense({ ...newExpense, category: e.target.value as any })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }}>
                     <option value="Ingredientes">Ingredientes</option>
                     <option value="Funcionários">Funcionários</option>
                     <option value="Contas">Contas Fixas</option>
@@ -2098,18 +2136,18 @@ function ReportsView() {
                 </label>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Data</span>
-                  <input required type="date" value={newExpense.date || ""} onChange={e => setNewExpense({...newExpense, date: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none", colorScheme: "dark" }} />
+                  <input required type="date" value={newExpense.date || ""} onChange={e => setNewExpense({ ...newExpense, date: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none", colorScheme: "dark" }} />
                 </label>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Valor (R$)</span>
-                  <input required type="number" step="0.01" min="0" placeholder="0.00" value={newExpense.amount || ""} onChange={e => setNewExpense({...newExpense, amount: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
+                  <input required type="number" step="0.01" min="0" placeholder="0.00" value={newExpense.amount || ""} onChange={e => setNewExpense({ ...newExpense, amount: e.target.value as any })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }} />
                 </label>
                 <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                   <span>Status</span>
-                  <select value={newExpense.status} onChange={e => setNewExpense({...newExpense, status: e.target.value as any})} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }}>
+                  <select value={newExpense.status} onChange={e => setNewExpense({ ...newExpense, status: e.target.value as any })} style={{ width: "100%", padding: "12px 16px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)", outline: "none" }}>
                     <option value="Pago">Pago</option>
                     <option value="Pendente">Pendente</option>
                   </select>
@@ -2169,7 +2207,7 @@ function CrmView() {
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [searchCrm, setSearchCrm] = useState("");
   const [filterSegment, setFilterSegment] = useState("Todos os Segmentos");
-  
+
   const crmData = [
     { id: "C01", name: "Camila Rocha", phone: "(11) 98765-4321", totalSpent: 1254.90, avgTicket: 89.60, orders: 14, lastVisit: "08/08", favDish: "Burger Artesanal", segment: "VIP" },
     { id: "C02", name: "João Silva", phone: "(11) 91234-5678", totalSpent: 356.00, avgTicket: 71.20, orders: 5, lastVisit: "08/08", favDish: "Pizza Margherita", segment: "Recorrente" },
@@ -2200,7 +2238,7 @@ function CrmView() {
   };
 
   const getSegmentBadge = (segment: string) => {
-    switch(segment) {
+    switch (segment) {
       case "VIP": return <span className="crm-badge vip">🌟 VIP</span>;
       case "Recorrente": return <span className="crm-badge recurrent">🔄 Recorrente</span>;
       case "Novo": return <span className="crm-badge new">🟢 Novo</span>;
@@ -2225,7 +2263,7 @@ function CrmView() {
       <div className="spreadsheet-container">
         <div className="spreadsheet-toolbar">
           <div className="search-box spreadsheet-search">
-            <Icon name="visao-geral" /> 
+            <Icon name="visao-geral" />
             <input type="text" placeholder="Buscar cliente por nome ou telefone..." value={searchCrm} onChange={e => setSearchCrm(e.target.value)} />
             <kbd>⌘K</kbd>
           </div>
@@ -2295,7 +2333,7 @@ function CrmView() {
             </tbody>
           </table>
         </div>
-        
+
         {selectedClients.length > 0 && (
           <div className="bulk-actions-bar">
             <span>{selectedClients.length} cliente(s) selecionado(s)</span>
@@ -2333,7 +2371,7 @@ function IntegrationsView() {
           </div>
           <button className="ghost-button" style={{ marginTop: "auto", width: "100%" }}>Configurar Integração</button>
         </div>
-        
+
         <div className="integration-card" style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: "14px", padding: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "#25D366", display: "flex", alignItems: "center", justifyContent: "center", padding: "8px" }}>
@@ -2382,7 +2420,7 @@ function KdsView({ orders, onAdvance, onExit }: { orders: Order[], onAdvance: (i
               <strong style={{ fontSize: 18 }}>#{order.id}</strong>
               <span style={{ fontSize: 14, color: order.status === "Em preparo" ? "var(--green)" : "var(--orange)", fontWeight: 600 }}>{order.status}</span>
             </div>
-            <p style={{ margin: "0 0 16px", fontSize: 16, lineHeight: 1.5 }}>{order.detail.split(' • ').map((str, i) => <span key={i} style={{display: "block", marginBottom: 4}}>{str}</span>)}</p>
+            <p style={{ margin: "0 0 16px", fontSize: 16, lineHeight: 1.5 }}>{order.detail.split(' • ').map((str, i) => <span key={i} style={{ display: "block", marginBottom: 4 }}>{str}</span>)}</p>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", borderTop: "1px solid #333", paddingTop: 12 }}>
               <span style={{ fontSize: 12, color: "#999" }}>{order.time}</span>
               <button className="primary-button" style={{ padding: "8px 16px", background: "var(--green)" }} onClick={() => onAdvance(order.id)}>Item Pronto ✓</button>
@@ -2395,7 +2433,7 @@ function KdsView({ orders, onAdvance, onExit }: { orders: Order[], onAdvance: (i
 }
 
 function ClientMenuSimulator({ tableNum, onClose, menuItems, onPlaceOrder }: { tableNum: number, onClose: () => void, menuItems: MenuItem[], onPlaceOrder: (items: any[], total: number) => void }) {
-  const [cart, setCart] = useState<{name: string, quantity: number, price: number}[]>([]);
+  const [cart, setCart] = useState<{ name: string, quantity: number, price: number }[]>([]);
   return (
     <div className="waiter-backdrop">
       <div className="waiter-frame">
@@ -2436,19 +2474,19 @@ function ClientMenuSimulator({ tableNum, onClose, menuItems, onPlaceOrder }: { t
   );
 }
 
-function WaiterView({ 
-  tables, 
-  menuItems, 
+function WaiterView({
+  tables,
+  menuItems,
   onExit,
   onAddItems
-}: { 
-  tables: Table[]; 
+}: {
+  tables: Table[];
   menuItems: MenuItem[];
   onExit: () => void;
-  onAddItems: (tableNum: number, items: {name: string, price: number, quantity: number}[]) => void;
+  onAddItems: (tableNum: number, items: { name: string, price: number, quantity: number }[]) => void;
 }) {
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
-  const [cart, setCart] = useState<{name: string, price: number, quantity: number}[]>([]);
+  const [cart, setCart] = useState<{ name: string, price: number, quantity: number }[]>([]);
 
   const addToCart = (item: MenuItem) => {
     setCart(current => {
@@ -2471,7 +2509,7 @@ function WaiterView({
     <div className="waiter-backdrop">
       {/* Mobile Frame Simulation */}
       <div className="waiter-frame">
-        
+
         {/* Mobile Header */}
         <div style={{ padding: "20px 20px 10px", background: "var(--panel)", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--line)" }}>
           {selectedTable ? (
@@ -2489,7 +2527,7 @@ function WaiterView({
           {!selectedTable ? (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               {tables.map(t => (
-                <button 
+                <button
                   key={t.number}
                   onClick={() => setSelectedTable(t.number)}
                   style={{
@@ -2550,9 +2588,9 @@ function WaiterView({
               <span style={{ fontSize: 14 }}>Itens ({cart.reduce((acc, c) => acc + c.quantity, 0)})</span>
               <strong style={{ fontSize: 18 }}>R$ {cartTotal.toFixed(2)}</strong>
             </div>
-            
+
             {cart.length > 0 && (
-              <button 
+              <button
                 onClick={() => {
                   onAddItems(selectedTable, cart);
                   setSelectedTable(null);
@@ -2566,6 +2604,275 @@ function WaiterView({
           </div>
         )}
 
+      </div>
+    </div>
+  );
+}
+
+
+
+function DriverView({
+  orders,
+  onAdvance,
+  onComplete,
+  onExit
+}: {
+  orders: Order[];
+  onAdvance: (id: number) => void;
+  onComplete: (id: number) => void;
+  onExit: () => void;
+}) {
+  const [activeTab, setActiveTab] = useState<"ativas" | "historico" | "perfil">("ativas");
+  const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
+  const [profileName, setProfileName] = useState("Carlos Motoboy");
+  const [profileAvatar, setProfileAvatar] = useState("👨‍🚀");
+
+  const AVATARES = ["👨‍🚀", "🏎️", "😎", "🦊", "⚡"];
+
+  const activeOrders = orders.filter(o => o.status === "Pronto" || o.status === "Saiu");
+  const historyOrders = orders.filter(o => o.status === "Entregue");
+
+  const weeklyEarnings = 420.50 + (historyOrders.length * 8);
+  const weeklyDeliveries = 32 + historyOrders.length;
+
+  return (
+    <div className="waiter-backdrop" style={{ background: "var(--canvas)" }}>
+      <div className="waiter-frame" style={{ display: "flex", flexDirection: "column" }}>
+
+        {/* Header & Profile Summary */}
+        <div style={{ padding: "20px 20px 0", background: "var(--panel)", borderBottom: "1px solid var(--line)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--blue)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, overflow: "hidden" }}>
+                {profileAvatar}
+              </div>
+              <div>
+                <div style={{ color: "var(--ink)", fontSize: 16, fontWeight: 700 }}>{profileName}</div>
+                <div style={{ color: "var(--green)", fontSize: 13, fontWeight: 600 }}>Online</div>
+              </div>
+            </div>
+            <button onClick={onExit} style={{ background: "transparent", border: 0, color: "var(--red)", fontSize: 14, cursor: "pointer", fontWeight: 600 }}>Sair</button>
+          </div>
+
+          <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
+            <div style={{ flex: 1, background: "var(--surface)", borderRadius: 12, padding: 12, border: "1px solid var(--line)" }}>
+              <div style={{ color: "var(--muted)", fontSize: 12, marginBottom: 4 }}>Ganhos (Semana)</div>
+              <div style={{ color: "var(--ink)", fontSize: 18, fontWeight: 800 }}>{formatMoney(weeklyEarnings)}</div>
+            </div>
+            <div style={{ flex: 1, background: "var(--surface)", borderRadius: 12, padding: 12, border: "1px solid var(--line)" }}>
+              <div style={{ color: "var(--muted)", fontSize: 12, marginBottom: 4 }}>Entregas</div>
+              <div style={{ color: "var(--ink)", fontSize: 18, fontWeight: 800 }}>{weeklyDeliveries}</div>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div style={{ display: "flex", gap: 16, overflowX: "auto" }}>
+            <button
+              onClick={() => setActiveTab("ativas")}
+              style={{ background: "transparent", border: 0, padding: "0 0 12px", color: activeTab === "ativas" ? "var(--ink)" : "var(--muted)", fontWeight: activeTab === "ativas" ? 700 : 500, fontSize: 14, borderBottom: activeTab === "ativas" ? "2px solid var(--blue)" : "2px solid transparent", cursor: "pointer", whiteSpace: "nowrap" }}
+            >
+              Ativas ({activeOrders.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("historico")}
+              style={{ background: "transparent", border: 0, padding: "0 0 12px", color: activeTab === "historico" ? "var(--ink)" : "var(--muted)", fontWeight: activeTab === "historico" ? 700 : 500, fontSize: 14, borderBottom: activeTab === "historico" ? "2px solid var(--blue)" : "2px solid transparent", cursor: "pointer", whiteSpace: "nowrap" }}
+            >
+              Histórico ({historyOrders.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("perfil")}
+              style={{ background: "transparent", border: 0, padding: "0 0 12px", color: activeTab === "perfil" ? "var(--ink)" : "var(--muted)", fontWeight: activeTab === "perfil" ? 700 : 500, fontSize: 14, borderBottom: activeTab === "perfil" ? "2px solid var(--blue)" : "2px solid transparent", cursor: "pointer", whiteSpace: "nowrap" }}
+            >
+              Meu Perfil
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
+          {activeTab === "ativas" && (
+            activeOrders.length === 0 ? (
+              <div style={{ textAlign: "center", color: "var(--muted)", marginTop: 60 }}>
+                <p style={{ fontSize: 40, margin: "0 0 16px" }}>🛵</p>
+                <p>Nenhuma entrega na fila.</p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {activeOrders.map(order => {
+                  const taxa = 8.00;
+                  const trocoPara = 100.00;
+                  const valorTroco = trocoPara > order.total ? trocoPara - order.total : 0;
+                  const enderecoCompleto = `Av. Min. Salgado Filho, 100, Guaratinguetá, SP, 12522-530`;
+
+                  return (
+                    <div key={order.id} style={{ background: "var(--panel)", borderRadius: 16, padding: 20, border: order.status === "Saiu" ? "2px solid var(--green)" : "1px solid var(--line)", position: "relative", overflow: "hidden" }}>
+                      {order.status === "Saiu" && <div style={{ position: "absolute", top: 0, right: 0, background: "var(--green)", color: "#000", padding: "4px 12px", fontSize: 10, fontWeight: 800, borderBottomLeftRadius: 10 }}>EM ROTA</div>}
+
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+                        <div>
+                          <strong style={{ fontSize: 18, display: "block", marginBottom: 4 }}>#{order.id}</strong>
+                          <span style={{ fontSize: 16, fontWeight: 700 }}>{order.customer}</span>
+                        </div>
+                        <div style={{ textAlign: "right", background: "var(--surface)", padding: 8, borderRadius: 8, border: "1px solid var(--line)" }}>
+                          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 2 }}>Total: <strong style={{ color: "var(--ink)" }}>{formatMoney(order.total)}</strong></div>
+                          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 0 }}>Sua Taxa: <strong style={{ color: "var(--green)" }}>{formatMoney(taxa)}</strong></div>
+                        </div>
+                      </div>
+
+                      <div style={{ background: "var(--surface)", padding: 12, borderRadius: 8, marginBottom: 16 }}>
+                        <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>Endereço de Entrega</p>
+                        <p style={{ margin: "0 0 4px", color: "var(--muted)", fontSize: 13, lineHeight: 1.5 }}>
+                          Av. Min. Salgado Filho, 100 - Vila Municipal<br />
+                          Guaratinguetá, SP • CEP: 12522-530
+                        </p>
+                        <p style={{ margin: 0, color: "var(--orange)", fontSize: 12, fontWeight: 600 }}>📍 Ref: Em frente a quadra de futebol</p>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div style={{ marginBottom: expandedOrder === order.id ? 16 : 16 }}>
+                        <a href={`https://wa.me/5524981177147?text=Olá ${order.customer}, o seu pedido do 2Type já está a caminho!`} target="_blank" rel="noreferrer" className="ghost-button" style={{ display: "block", textAlign: "center", textDecoration: "none", fontSize: 13, padding: "12px 0", marginBottom: 10, color: "var(--green)", borderColor: "rgba(34, 197, 94, 0.2)" }}>💬 WhatsApp Cliente</a>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                          <a href={`https://waze.com/ul?q=${encodeURIComponent(enderecoCompleto)}&navigate=yes`} target="_blank" rel="noreferrer" className="ghost-button" style={{ textAlign: "center", textDecoration: "none", fontSize: 13, padding: "12px 0", height: "auto" }}>🚙 Waze</a>
+                          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoCompleto)}`} target="_blank" rel="noreferrer" className="ghost-button" style={{ textAlign: "center", textDecoration: "none", fontSize: 13, padding: "12px 0", height: "auto" }}>📍 G. Maps</a>
+                          <a href={`http://maps.apple.com/?q=${encodeURIComponent(enderecoCompleto)}`} target="_blank" rel="noreferrer" className="ghost-button" style={{ textAlign: "center", textDecoration: "none", fontSize: 13, padding: "12px 0", height: "auto" }}>🍎 Apple</a>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+                        style={{ width: "100%", padding: "12px 0", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, color: "var(--ink)", fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                      >
+                        <span style={{ paddingLeft: 12 }}>Ver ítens do pedido</span>
+                        <span style={{ paddingRight: 12, opacity: 0.5 }}>{expandedOrder === order.id ? "▲" : "▼"}</span>
+                      </button>
+
+                      {expandedOrder === order.id && (
+                        <div style={{ background: "var(--surface)", padding: 16, borderRadius: 8, marginBottom: 16, fontSize: 13, color: "var(--muted)", borderLeft: "3px solid var(--blue)" }}>
+                          <strong style={{ color: "var(--ink)", display: "block", marginBottom: 8 }}>Itens na sacola:</strong>
+                          <p style={{ margin: "0 0 12px", lineHeight: 1.5 }}>{order.detail}</p>
+                          <strong style={{ color: "var(--ink)", display: "block", marginBottom: 8 }}>Pagamento:</strong>
+                          <p style={{ margin: 0, lineHeight: 1.5 }}>
+                            Pagar na entrega (Dinheiro)<br />
+                            {valorTroco > 0 && (
+                              <strong style={{ color: "var(--red)" }}>
+                                Troco para {formatMoney(trocoPara)} (Levar {formatMoney(valorTroco)} de troco)
+                              </strong>
+                            )}
+                          </p>
+                        </div>
+                      )}
+
+                      {order.status === "Pronto" ? (
+                        <button className="primary-button" style={{ width: "100%", height: "auto", padding: "14px 0", fontSize: 15 }} onClick={() => onAdvance(order.id)}>Pegar Rota 📍</button>
+                      ) : (
+                        <button className="primary-button" style={{ width: "100%", background: "var(--green)", border: "none", height: "auto", padding: "14px 0", fontSize: 15 }} onClick={() => onComplete(order.id)}>Entregue ✅</button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          )}
+
+          {activeTab === "historico" && (
+            historyOrders.length === 0 ? (
+              <div style={{ textAlign: "center", color: "var(--muted)", marginTop: 60 }}>
+                <p style={{ fontSize: 40, margin: "0 0 16px" }}>📝</p>
+                <p>Nenhuma entrega finalizada hoje.</p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {historyOrders.map(order => (
+                  <div key={order.id} style={{ background: "var(--panel)", borderRadius: 12, padding: 16, border: "1px solid var(--line)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <strong style={{ fontSize: 15, display: "block", marginBottom: 4 }}>#{order.id} - {order.customer}</strong>
+                      <span style={{ color: "var(--muted)", fontSize: 12 }}>Finalizado hoje</span>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <strong style={{ fontSize: 15, color: "var(--green)", display: "block" }}>+ R$ 8,00</strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
+
+          {activeTab === "perfil" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              <div style={{ background: "var(--panel)", padding: 20, borderRadius: 16, border: "1px solid var(--line)" }}>
+                <h3 style={{ fontSize: 16, margin: "0 0 16px" }}>Dados Pessoais</h3>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+                  <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid var(--blue)", fontSize: 32 }}>
+                    {profileAvatar}
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {AVATARES.map(emoji => (
+                      <button
+                        key={emoji}
+                        onClick={() => setProfileAvatar(emoji)}
+                        style={{ width: 40, height: 40, borderRadius: "50%", border: profileAvatar === emoji ? "2px solid var(--blue)" : "1px solid var(--line)", background: "var(--surface)", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 8 }}>NOME DE EXIBIÇÃO</label>
+                  <input
+                    className="modal-input"
+                    value={profileName}
+                    onChange={e => setProfileName(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div style={{ background: "var(--panel)", padding: 20, borderRadius: 16, border: "1px solid var(--line)" }}>
+                <h3 style={{ fontSize: 16, margin: "0 0 16px" }}>Minhas Análises</h3>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 40, fontSize: 12, color: "var(--muted)" }}>Seg</div>
+                    <div style={{ flex: 1, background: "var(--surface)", height: 8, borderRadius: 4, overflow: "hidden" }}>
+                      <div style={{ background: "var(--blue)", width: "60%", height: "100%" }} />
+                    </div>
+                    <div style={{ width: 30, fontSize: 12, fontWeight: 600, textAlign: "right" }}>12</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 40, fontSize: 12, color: "var(--muted)" }}>Ter</div>
+                    <div style={{ flex: 1, background: "var(--surface)", height: 8, borderRadius: 4, overflow: "hidden" }}>
+                      <div style={{ background: "var(--blue)", width: "40%", height: "100%" }} />
+                    </div>
+                    <div style={{ width: 30, fontSize: 12, fontWeight: 600, textAlign: "right" }}>8</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 40, fontSize: 12, color: "var(--muted)" }}>Qua</div>
+                    <div style={{ flex: 1, background: "var(--surface)", height: 8, borderRadius: 4, overflow: "hidden" }}>
+                      <div style={{ background: "var(--blue)", width: "80%", height: "100%" }} />
+                    </div>
+                    <div style={{ width: 30, fontSize: 12, fontWeight: 600, textAlign: "right" }}>16</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 40, fontSize: 12, color: "var(--muted)" }}>Qui</div>
+                    <div style={{ flex: 1, background: "var(--surface)", height: 8, borderRadius: 4, overflow: "hidden" }}>
+                      <div style={{ background: "var(--orange)", width: "30%", height: "100%" }} />
+                    </div>
+                    <div style={{ width: 30, fontSize: 12, fontWeight: 600, textAlign: "right" }}>6</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 40, fontSize: 12, color: "var(--muted)" }}>Sex</div>
+                    <div style={{ flex: 1, background: "var(--surface)", height: 8, borderRadius: 4, overflow: "hidden" }}>
+                      <div style={{ background: "var(--green)", width: `${Math.min(100, (weeklyDeliveries / 20) * 100)}%`, height: "100%" }} />
+                    </div>
+                    <div style={{ width: 30, fontSize: 12, fontWeight: 600, textAlign: "right", color: "var(--green)" }}>{weeklyDeliveries}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
