@@ -2703,6 +2703,7 @@ function DriverView({
                   const trocoPara = 100.00;
                   const valorTroco = trocoPara > order.total ? trocoPara - order.total : 0;
                   const enderecoCompleto = `Av. Min. Salgado Filho, 100, Guaratinguetá, SP, 12522-530`;
+                  const distanciaKm = ((order.id % 5) + 1.8).toFixed(1);
 
                   return (
                     <div key={order.id} style={{ background: "var(--panel)", borderRadius: 16, padding: 20, border: order.status === "Saiu" ? "2px solid var(--green)" : "1px solid var(--line)", position: "relative", overflow: "hidden" }}>
@@ -2715,12 +2716,15 @@ function DriverView({
                         </div>
                         <div style={{ textAlign: "right", background: "var(--surface)", padding: 8, borderRadius: 8, border: "1px solid var(--line)" }}>
                           <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 2 }}>Total: <strong style={{ color: "var(--ink)" }}>{formatMoney(order.total)}</strong></div>
-                          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 0 }}>Sua Taxa: <strong style={{ color: "var(--green)" }}>{formatMoney(taxa)}</strong></div>
+                          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 0 }}>Taxa da Entrega: <strong style={{ color: "var(--green)" }}>{formatMoney(taxa)}</strong></div>
                         </div>
                       </div>
 
                       <div style={{ background: "var(--surface)", padding: 12, borderRadius: 8, marginBottom: 16 }}>
-                        <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>Endereço de Entrega</p>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                          <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>Endereço de Entrega</p>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--blue)", background: "rgba(59, 130, 246, 0.15)", padding: "2px 8px", borderRadius: 12 }}>{distanciaKm} km</span>
+                        </div>
                         <p style={{ margin: "0 0 4px", color: "var(--muted)", fontSize: 13, lineHeight: 1.5 }}>
                           Av. Min. Salgado Filho, 100 - Vila Municipal<br />
                           Guaratinguetá, SP • CEP: 12522-530
@@ -2730,11 +2734,28 @@ function DriverView({
 
                       {/* Action Buttons */}
                       <div style={{ marginBottom: expandedOrder === order.id ? 16 : 16 }}>
-                        <a href={`https://wa.me/5524981177147?text=Olá ${order.customer}, o seu pedido do 2Type já está a caminho!`} target="_blank" rel="noreferrer" className="ghost-button" style={{ display: "block", textAlign: "center", textDecoration: "none", fontSize: 13, padding: "12px 0", marginBottom: 10, color: "var(--green)", borderColor: "rgba(34, 197, 94, 0.2)" }}>💬 WhatsApp Cliente</a>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                          <a href={`https://wa.me/5524981177147?text=Olá ${order.customer}, o seu pedido do Barbosa Restaurante já está a caminho!`} target="_blank" rel="noreferrer" className="ghost-button" style={{ textAlign: "center", textDecoration: "none", fontSize: 13, padding: "12px 0", color: "var(--green)", borderColor: "rgba(34, 197, 94, 0.2)" }}>💬 WhatsApp</a>
+                          <button onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                              navigator.clipboard.writeText(enderecoCompleto);
+                              alert("Endereço copiado!");
+                            } else {
+                              const textArea = document.createElement("textarea");
+                              textArea.value = enderecoCompleto;
+                              document.body.appendChild(textArea);
+                              textArea.select();
+                              try { document.execCommand('copy'); alert("Endereço copiado!"); } 
+                              catch (err) { alert("Não foi possível copiar o endereço automaticamente."); }
+                              document.body.removeChild(textArea);
+                            }
+                          }} className="ghost-button" style={{ textAlign: "center", fontSize: 13, padding: "12px 0", color: "var(--ink)", borderColor: "var(--line)", cursor: "pointer" }}>📋 Copiar Endereço</button>
+                        </div>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoCompleto)}`} target="_blank" rel="noreferrer" className="ghost-button" style={{ textAlign: "center", textDecoration: "none", fontSize: 13, padding: "12px 0", height: "auto" }}>📍 Maps</a>
+                          <a href={`http://maps.apple.com/?q=${encodeURIComponent(enderecoCompleto)}`} target="_blank" rel="noreferrer" className="ghost-button" style={{ textAlign: "center", textDecoration: "none", fontSize: 13, padding: "12px 0", height: "auto" }}>🍎 Mapas</a>
                           <a href={`https://waze.com/ul?q=${encodeURIComponent(enderecoCompleto)}&navigate=yes`} target="_blank" rel="noreferrer" className="ghost-button" style={{ textAlign: "center", textDecoration: "none", fontSize: 13, padding: "12px 0", height: "auto" }}>🚙 Waze</a>
-                          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoCompleto)}`} target="_blank" rel="noreferrer" className="ghost-button" style={{ textAlign: "center", textDecoration: "none", fontSize: 13, padding: "12px 0", height: "auto" }}>📍 G. Maps</a>
-                          <a href={`http://maps.apple.com/?q=${encodeURIComponent(enderecoCompleto)}`} target="_blank" rel="noreferrer" className="ghost-button" style={{ textAlign: "center", textDecoration: "none", fontSize: 13, padding: "12px 0", height: "auto" }}>🍎 Apple</a>
                         </div>
                       </div>
 
