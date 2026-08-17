@@ -61,7 +61,7 @@ export function MenuView({
         <button className="primary-button" type="button" onClick={() => setModalOpen(true)}>+ Novo item</button>
       </div>
 
-      <section className="panel menu-table-panel">
+      <section className="panel glass-card menu-table-panel">
         <div className="menu-table-heading">
           <span>ITEM</span><span>CATEGORIA</span><span>PREÇO</span><span>VENDAS HOJE</span><span>DISPONÍVEL</span><span />
         </div>

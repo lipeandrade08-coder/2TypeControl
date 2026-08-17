@@ -52,7 +52,7 @@ export function WhatsAppView({
   return (
     <div className="page-content whatsapp-workspace">
       {/* Conversation List */}
-      <section className="conversation-list panel">
+      <section className="conversation-list panel glass-card">
         <div className="conversation-heading">
           <div>
             <h2>Conversas</h2>
@@ -81,7 +81,7 @@ export function WhatsAppView({
       </section>
 
       {/* Chat Panel */}
-      <section className="chat-panel panel">
+      <section className="chat-panel panel glass-card">
         <header className="chat-header">
           <span className={`avatar ${activeChat.isVip ? "coral" : ""}`}>{activeChat.initials}</span>
           <span>
@@ -117,7 +117,7 @@ export function WhatsAppView({
       </section>
 
       {/* AI Copilot */}
-      <aside className="chat-insights panel">
+      <aside className="chat-insights panel glass-card">
         <div className="insights-header">
           <span className="spark">✦</span>
           <span><strong>Copiloto IA</strong><small>Contexto da conversa</small></span>

@@ -115,26 +115,103 @@ export default function LoginPage() {
         }
         .glass-input:focus {
           background: rgba(0, 0, 0, 0.4);
-          border-color: var(--purple);
-          box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+          border-color: rgba(139, 92, 246, 0.6);
+          box-shadow: 0 0 15px rgba(139, 92, 246, 0.3), inset 0 0 8px rgba(139, 92, 246, 0.1);
+          outline: none;
         }
         .glass-input::placeholder {
           color: rgba(255,255,255,0.2);
         }
         .demo-btn {
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          border-radius: 12px;
-          color: rgba(255,255,255,0.7);
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          position: relative;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          color: rgba(255, 255, 255, 0.7);
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          overflow: hidden;
+          z-index: 1;
         }
+        
+        /* Subtle inner gradient */
+        .demo-btn::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.1) 0%, transparent 60%);
+          opacity: 0;
+          transition: opacity 0.4s ease;
+          z-index: -1;
+        }
+
+        /* Sweeping light effect */
+        .demo-btn::before {
+          content: '';
+          position: absolute;
+          top: 0; left: -150%;
+          width: 50%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+          transform: skewX(-20deg);
+          transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+          z-index: -1;
+        }
+
         .demo-btn:hover {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(139, 92, 246, 0.4);
           color: #fff;
-          transform: translateY(-2px);
-          box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+          transform: translateY(-3px);
+          box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.25),
+                      0 0 12px 0 rgba(139, 92, 246, 0.1) inset;
         }
+        
+        .demo-btn:hover::before {
+          left: 150%;
+        }
+
+        .demo-btn:hover::after {
+          opacity: 1;
+        }
+
+        .primary-button-login {
+          width: 100%;
+          height: 52px;
+          font-size: 15px;
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.8) 0%, rgba(76, 29, 149, 0.8) 100%);
+          border: 1px solid rgba(139, 92, 246, 0.4);
+          border-radius: 12px;
+          color: white;
+          font-weight: 600;
+          cursor: pointer;
+          position: relative;
+          overflow: hidden;
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.4), inset 0 0 10px rgba(139, 92, 246, 0.2);
+          z-index: 1;
+        }
+
+        .primary-button-login::before {
+          content: '';
+          position: absolute;
+          top: 0; left: -100%;
+          width: 50%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+          transform: skewX(-20deg);
+          transition: all 0.6s ease;
+          z-index: -1;
+        }
+
+        .primary-button-login:hover {
+          background: linear-gradient(135deg, rgba(139, 92, 246, 1) 0%, rgba(76, 29, 149, 1) 100%);
+          box-shadow: 0 15px 30px -5px rgba(139, 92, 246, 0.6), inset 0 0 15px rgba(139, 92, 246, 0.4);
+          transform: translateY(-2px);
+          border-color: rgba(167, 139, 250, 0.6);
+        }
+
+        .primary-button-login:hover::before {
+          left: 150%;
+        }
+        
         .logo-container {
           animation: float 6s ease-in-out infinite;
         }
@@ -198,16 +275,10 @@ export default function LoginPage() {
 
               <button 
                 type="submit" 
-                className="primary-button" 
+                className="primary-button-login" 
                 style={{ 
-                  width: "100%", 
-                  height: "52px", 
-                  fontSize: "15px", 
-                  background: "linear-gradient(135deg, var(--purple) 0%, #4c1d95 100%)",
-                  boxShadow: "0 10px 25px var(--purple-glow)",
                   opacity: loading ? 0.7 : 1,
-                  transform: loading ? "scale(0.98)" : "scale(1)",
-                  transition: "all 0.2s"
+                  transform: loading ? "scale(0.98)" : "translateY(0)"
                 }}
                 disabled={loading}
               >

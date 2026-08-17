@@ -513,29 +513,184 @@ export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
       {/* ─── Modal: Taxa de entrega ─────────────────────── */}
       {feeModal && pendingFee && (
         <div className="modal-backdrop">
+          <style dangerouslySetInnerHTML={{ __html: `
+            .pro-fee-modal {
+              background: linear-gradient(180deg, var(--panel) 0%, var(--surface) 100%);
+              border: 1px solid var(--line);
+              box-shadow: 0 40px 100px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+              border-radius: 24px;
+              padding: 32px;
+              width: 100%;
+              max-width: 480px;
+              position: relative;
+            }
+            .pro-fee-modal h2 {
+              font-size: 22px;
+              font-weight: 700;
+              margin: 0 0 12px 0;
+              color: var(--ink);
+            }
+            .pro-fee-modal p.desc {
+              color: var(--muted);
+              font-size: 13px;
+              line-height: 1.5;
+              margin: 0 0 24px 0;
+            }
+            .pro-fee-wrapper {
+              position: relative;
+              display: flex;
+              align-items: center;
+            }
+            .pro-fee-input {
+              width: 100%;
+              height: 56px;
+              background: var(--panel);
+              border: 1px solid var(--line);
+              border-radius: 12px;
+              color: var(--ink);
+              padding: 0 16px 0 46px;
+              font-size: 18px;
+              font-weight: 700;
+              transition: all 0.2s;
+              outline: none;
+            }
+            .pro-fee-input:focus {
+              border-color: var(--orange);
+              box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+            }
+            .pro-fee-prefix {
+              position: absolute;
+              left: 16px;
+              font-size: 16px;
+              font-weight: 700;
+              color: var(--orange);
+              pointer-events: none;
+            }
+            .pro-fee-button {
+              height: 52px;
+              border-radius: 12px;
+              background: linear-gradient(135deg, var(--orange) 0%, #d97706 100%);
+              border: none;
+              color: white;
+              font-size: 14px;
+              font-weight: 700;
+              cursor: pointer;
+              transition: all 0.2s;
+              box-shadow: 0 8px 24px rgba(245, 158, 11, 0.25);
+              margin-top: 24px;
+              width: 100%;
+            }
+            .pro-fee-button:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 12px 32px rgba(245, 158, 11, 0.35);
+            }
+            .pro-address-card {
+              background: var(--panel);
+              border: 1px dashed var(--line);
+              border-radius: 12px;
+              padding: 16px;
+              display: flex;
+              gap: 12px;
+              align-items: center;
+              margin-bottom: 24px;
+            }
+            .pro-address-icon {
+              width: 36px;
+              height: 36px;
+              border-radius: 10px;
+              background: var(--orange-soft);
+              color: var(--orange);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .pro-address-info strong {
+              display: block;
+              font-size: 13px;
+              color: var(--ink);
+            }
+            .pro-address-info small {
+              display: block;
+              font-size: 11px;
+              color: var(--muted);
+              margin-top: 4px;
+            }
+            .pro-fee-summary {
+              background: var(--panel);
+              border: 1px solid var(--line);
+              border-radius: 12px;
+              padding: 16px;
+              margin-top: 16px;
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+            }
+            .pro-fee-summary-row {
+              display: flex;
+              justify-content: space-between;
+              font-size: 13px;
+              color: var(--muted);
+            }
+            .pro-fee-summary-row.total {
+              padding-top: 12px;
+              border-top: 1px dashed var(--line);
+              font-size: 15px;
+              color: var(--ink);
+              font-weight: 700;
+            }
+          `}} />
           <button className="modal-scrim" type="button" aria-label="Fechar taxa de entrega" onClick={() => setFeeModal(false)} />
-          <section className="fee-modal" role="dialog" aria-modal="true" aria-labelledby="fee-title">
-            <button className="modal-close" type="button" aria-label="Fechar" onClick={() => setFeeModal(false)}>×</button>
-            <span className="modal-icon">➜</span>
-            <p className="eyebrow orange">PEDIDO DO SITE</p>
-            <h2 id="fee-title">Adicionar taxa de entrega</h2>
-            <p>O pedido <strong>#{pendingFee.id}</strong> de {pendingFee.customer} já está pronto. Informe a taxa para confirmar e enviar a comanda para a produção.</p>
-            <div className="address-card"><span>⌖</span><span><strong>Rua das Acácias, 148 — Centro</strong><small>3,2 km da Casa do Forno • aprox. 18 min</small></span></div>
+          <section className="pro-fee-modal" role="dialog" aria-modal="true" aria-labelledby="fee-title">
+            <button className="pro-close" type="button" aria-label="Fechar" onClick={() => setFeeModal(false)} style={{
+              position: "absolute", top: 24, right: 24, width: 32, height: 32, borderRadius: "50%", background: "var(--surface)", border: "1px solid var(--line)", color: "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s"
+            }}>
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width: 16, height: 16}}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <p className="eyebrow orange" style={{ marginBottom: 12 }}>PEDIDO DO SITE</p>
+            <h2 id="fee-title">Confirmar Taxa de Entrega</h2>
+            <p className="desc">O pedido <strong>#{pendingFee.id}</strong> de {pendingFee.customer} já está pronto. Informe a taxa para confirmar e enviar a comanda para a produção.</p>
+            
+            <div className="pro-address-card">
+              <div className="pro-address-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{width: 20, height: 20}}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </div>
+              <div className="pro-address-info">
+                <strong>Rua das Acácias, 148 — Centro</strong>
+                <small>3,2 km da Casa do Forno • aprox. 18 min</small>
+              </div>
+            </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <label className="fee-field">
-                <span>Taxa Cobrada do Cliente</span>
-                <span className="money-input"><b>R$</b><input ref={feeInputRef} aria-label="Taxa de entrega em reais" value={deliveryFee} onChange={(e) => setDeliveryFee(e.target.value)} inputMode="decimal" /></span>
-              </label>
-              <label className="fee-field">
-                <span>Repasse ao Entregador</span>
-                <span className="money-input"><b>R$</b><input aria-label="Repasse entregador" value={driverFeeInput} onChange={(e) => setDriverFeeInput(e.target.value)} inputMode="decimal" /></span>
-              </label>
+              <div>
+                <span style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 8, letterSpacing: 0.5 }}>Taxa ao Cliente</span>
+                <div className="pro-fee-wrapper">
+                  <span className="pro-fee-prefix">R$</span>
+                  <input className="pro-fee-input" ref={feeInputRef} aria-label="Taxa de entrega em reais" value={deliveryFee} onChange={(e) => setDeliveryFee(e.target.value)} inputMode="decimal" />
+                </div>
+              </div>
+              <div>
+                <span style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 8, letterSpacing: 0.5 }}>Repasse ao Entregador</span>
+                <div className="pro-fee-wrapper">
+                  <span className="pro-fee-prefix">R$</span>
+                  <input className="pro-fee-input" aria-label="Repasse entregador" value={driverFeeInput} onChange={(e) => setDriverFeeInput(e.target.value)} inputMode="decimal" />
+                </div>
+              </div>
             </div>
-            <div className="fee-summary">
-              <span>Subtotal do pedido</span><strong>{formatMoney(pendingFee.total)}</strong>
-              <span>Total com entrega</span><strong>{formatMoney(pendingFee.total + (Number(deliveryFee.replace(",", ".")) || 0))}</strong>
+
+            <div className="pro-fee-summary">
+              <div className="pro-fee-summary-row">
+                <span>Subtotal do pedido</span>
+                <strong>{formatMoney(pendingFee.total)}</strong>
+              </div>
+              <div className="pro-fee-summary-row total">
+                <span>Total com entrega</span>
+                <strong style={{ color: "var(--orange)" }}>{formatMoney(pendingFee.total + (Number(deliveryFee.replace(",", ".")) || 0))}</strong>
+              </div>
             </div>
-            <button className="primary-button wide" type="button" onClick={applyFee}>Confirmar pedido e enviar à cozinha</button>
+
+            <button className="pro-fee-button" type="button" onClick={applyFee}>
+              Confirmar pedido e enviar à cozinha
+            </button>
           </section>
         </div>
       )}

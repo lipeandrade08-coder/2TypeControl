@@ -25,12 +25,12 @@
 }
 
 :root[data-theme="light"] {
-  --ink: #09090b;
-  --muted: #52525b;
-  --line: #e4e4e7;
-  --canvas: #fafafa;
+  --ink: #111118;
+  --muted: #64748b;
+  --line: #e2e4e9;
+  --canvas: #f0f2f5;
   --panel: #ffffff;
-  --forest: #f4f4f5;
+  --forest: #e9ecef;
   --purple: #6e30eb;
   --purple-glow: rgba(110, 48, 235, 0.1);
   --purple-soft: #f3e8ff;
@@ -44,8 +44,8 @@
   --red-soft: #ffe4e6;
   --surface: rgba(0, 0, 0, 0.03);
   --surface-hover: rgba(0, 0, 0, 0.06);
-  --backdrop: rgba(255, 255, 255, 0.4);
-  --shadow: 0 10px 40px rgba(0,0,0,0.08);
+  --backdrop: rgba(255, 255, 255, 0.5);
+  --shadow: 0 10px 40px rgba(0,0,0,0.06);
 }
 
 * { box-sizing: border-box; }
@@ -117,6 +117,18 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--purple); ou
 .page-content { padding: 12px 32px 36px; max-width: 1550px; margin: 0 auto; }
 .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .metric-card { min-width: 0; min-height: 120px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; position: relative; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
+.glass-card, .metric-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+:root[data-theme="light"] .glass-card, :root[data-theme="light"] .metric-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(250, 250, 255, 0.8) 100%) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
 .metric-card-header { display: flex; align-items: center; gap: 12px; z-index: 2; }
 .metric-icon { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; font-size: 18px; font-weight: 600; }
 .metric-icon.purple { background: var(--purple-soft); color: var(--purple); }
@@ -354,8 +366,25 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--purple); ou
 .reports-grid { display: grid; grid-template-columns: 1.4fr .6fr; gap: 14px; margin-top: 14px; }.chart-value { padding: 18px 18px 4px; display: flex; gap: 9px; align-items: center; }.chart-value strong { font-size: 18px; }.chart-value span { color: var(--green); font-size: 9px; }.large-chart { height: 250px; padding: 20px 20px 12px; display: flex; align-items: end; gap: 10px; background: repeating-linear-gradient(to bottom, transparent, transparent 54px, #f1f0eb 55px); }.large-chart > div { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: end; text-align: center; }.large-chart i { display: block; width: 100%; min-height: 3px; border-radius: 5px 5px 0 0; background: #b9d1c6; }.large-chart i.peak { background: var(--orange); }.large-chart small { height: 16px; margin-top: 6px; font-size: 7px; color: var(--muted); }
 .channel-report { text-align: center; }.donut { width: 145px; height: 145px; margin: 24px auto 18px; border-radius: 50%; background: conic-gradient(var(--green) 0 52%, var(--orange) 52% 80%, var(--blue) 80% 100%); display: grid; place-items: center; position: relative; }.donut::after { content:""; width: 93px; height: 93px; border-radius: 50%; background: var(--panel); position: absolute; }.donut div { z-index: 1; }.donut strong, .donut small { display: block; }.donut strong { font-size: 16px; }.donut small { color: var(--muted); font-size: 8px; margin-top: 3px; }.channel-legend { padding: 0 22px 18px; }.channel-legend span { display: grid; grid-template-columns: 8px 1fr auto; gap: 7px; padding: 7px 0; font-size: 9px; text-align: left; }.channel-legend i { width: 7px; height: 7px; border-radius: 50%; margin-top: 2px; }.channel-legend i.wa{background:var(--green)}.channel-legend i.site{background:var(--orange)}.channel-legend i.room{background:var(--blue)}
 
-.modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: var(--backdrop); backdrop-filter: blur(3px); padding: 18px; }.fee-modal { width: min(430px, 100%); background: var(--panel); border-radius: 16px; padding: 25px; box-shadow: 0 25px 80px rgba(0,0,0,.24); position: relative; max-height: 90vh; overflow-y: auto; }.modal-close { position: absolute; right: 14px; top: 12px; width: 30px; height: 30px; border: 0; background: var(--surface); border-radius: 8px; cursor: pointer; font-size: 18px; }.modal-icon { width: 42px; height: 42px; border-radius: 11px; background: var(--orange-soft); color: var(--orange); display: grid; place-items: center; margin-bottom: 15px; }.fee-modal h2 { font-size: 20px; margin: 2px 0 8px; }.fee-modal > p:not(.eyebrow) { color: var(--muted); font-size: 10px; line-height: 1.6; }.address-card { display: flex; gap: 10px; background: var(--surface); padding: 11px; border-radius: 9px; margin: 14px 0; }.address-card > span:first-child { color: var(--orange); }.address-card strong, .address-card small { display: block; font-size: 9px; }.address-card small { color: var(--muted); margin-top: 5px; }.fee-field > span:first-child { display: block; font-size: 9px; font-weight: 800; margin-bottom: 6px; }.money-input { height: 45px; border: 1px solid var(--line); border-radius: 9px; display: flex; align-items: center; padding: 0 12px; }.money-input b { color: var(--muted); font-size: 11px; }.money-input input { min-width: 0; flex: 1; border: 0; outline: 0; text-align: right; font-size: 17px; font-weight: 800; background: transparent; color: var(--ink); }.fee-summary { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: 16px 0; padding-top: 13px; border-top: 1px solid var(--line); font-size: 10px; }.fee-summary span { color: var(--muted); }.fee-summary span:last-of-type, .fee-summary strong:last-child { color: var(--ink); font-size: 12px; }.fee-modal .primary-button.wide { height: 43px; width: 100%; margin: 0; background: var(--orange); border-color: var(--orange); }
-.modal-overlay { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: rgba(0,0,0,.7); backdrop-filter: blur(5px); }
+.modal-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-start; justify-content: center; padding-top: 10vh; padding-bottom: 24px; background: var(--backdrop); backdrop-filter: blur(3px); }
+.fee-modal { width: min(430px, 100%); background: var(--panel); border-radius: 16px; padding: 25px; box-shadow: 0 25px 80px rgba(0,0,0,.24); position: relative; max-height: calc(100vh - 12vh - 24px); overflow-y: auto; }
+.modal-close { position: absolute; right: 14px; top: 12px; width: 30px; height: 30px; border: 0; background: var(--surface); border-radius: 8px; cursor: pointer; font-size: 18px; }
+.modal-icon { width: 42px; height: 42px; border-radius: 11px; background: var(--orange-soft); color: var(--orange); display: grid; place-items: center; margin-bottom: 15px; }
+.fee-modal h2 { font-size: 20px; margin: 2px 0 8px; }
+.fee-modal > p:not(.eyebrow) { color: var(--muted); font-size: 10px; line-height: 1.6; }
+.address-card { display: flex; gap: 10px; background: var(--surface); padding: 11px; border-radius: 9px; margin: 14px 0; }
+.address-card > span:first-child { color: var(--orange); }
+.address-card strong, .address-card small { display: block; font-size: 9px; }
+.address-card small { color: var(--muted); margin-top: 5px; }
+.fee-field > span:first-child { display: block; font-size: 9px; font-weight: 800; margin-bottom: 6px; }
+.money-input { height: 45px; border: 1px solid var(--line); border-radius: 9px; display: flex; align-items: center; padding: 0 12px; }
+.money-input b { color: var(--muted); font-size: 11px; }
+.money-input input { min-width: 0; flex: 1; border: 0; outline: 0; text-align: right; font-size: 17px; font-weight: 800; background: transparent; color: var(--ink); }
+.fee-summary { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: 16px 0; padding-top: 13px; border-top: 1px solid var(--line); font-size: 10px; }
+.fee-summary span { color: var(--muted); }
+.fee-summary span:last-of-type, .fee-summary strong:last-child { color: var(--ink); font-size: 12px; }
+.fee-modal .primary-button.wide { height: 43px; width: 100%; margin: 0; background: var(--orange); border-color: var(--orange); }
+.modal-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-start; justify-content: center; padding-top: 10vh; padding-bottom: 24px; background: rgba(0,0,0,.7); backdrop-filter: blur(5px); }
 .modal-content { background: var(--panel); border-radius: 16px; border: 1px solid var(--line); overflow: hidden; box-shadow: 0 25px 80px rgba(0,0,0,0.5); }
 .modal-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(255,255,255,0.1); }
 .modal-header h2 { font-size: 18px; }

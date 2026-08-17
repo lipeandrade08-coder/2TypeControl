@@ -53,7 +53,7 @@ export function OverviewView({
 
       <div className="overview-grid">
         {/* Pedidos ao vivo */}
-        <section className="panel orders-panel">
+        <section className="panel glass-card orders-panel">
           <PanelHeader title="Pedidos agora" subtitle="8 pedidos em andamento" action="Ver todos" onAction={() => onView("Pedidos")} />
           <div className="order-list">
             {orders.slice(0, 5).map((order) => (
@@ -77,7 +77,7 @@ export function OverviewView({
         </section>
 
         {/* Insights IA */}
-        <section className="panel insights-panel" style={{ background: "var(--purple-soft)", border: "1px solid rgba(139,92,246,0.2)" }}>
+        <section className="panel glass-card insights-panel" style={{ background: "var(--purple-soft)", border: "1px solid rgba(139,92,246,0.2)" }}>
           <PanelHeader title="Insights da IA" subtitle="Análise em tempo real" action="Ver relatório" onAction={() => onView("Relatórios")} />
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
             <div style={{ padding: 12, background: "var(--surface-hover)", borderRadius: 8, borderLeft: "3px solid var(--orange)", fontSize: 13, lineHeight: 1.4 }}>
@@ -93,7 +93,7 @@ export function OverviewView({
         </section>
 
         {/* IA WhatsApp */}
-        <section className="panel ai-panel">
+        <section className="panel glass-card ai-panel">
           <PanelHeader title="IA no WhatsApp" subtitle="Atendimento automático" extra={<Toggle enabled={aiEnabled} onToggle={onToggleAi} />} />
           <div className="ai-status-row">
             <span className="spark">✦</span>
@@ -122,7 +122,7 @@ export function OverviewView({
       </div>
 
       {/* Resumo de vendas */}
-      <div className="bottom-panel">
+      <div className="bottom-panel glass-card">
         <h2>Resumo de vendas</h2>
         <select><option>Últimos 7 dias ⌄</option></select>
         <div className="bottom-metrics">

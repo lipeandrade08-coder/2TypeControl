@@ -14,7 +14,7 @@ export function ReportsView() {
 
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [expenseModal, setExpenseModal] = useState(false);
-  const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: "Ingredientes", status: "Pago" });
+  const [newExpense, setNewExpense] = useState<Partial<Omit<Expense, "amount">> & { amount?: string | number }>({ category: "Ingredientes", status: "Pago" });
 
   const totalRevenue = 86420;
   const baseExpenses = 32540;
@@ -31,13 +31,30 @@ export function ReportsView() {
 
   const handleAddExpense = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newExpense.description || !newExpense.amount || !newExpense.date) return;
+    
+    let rawAmount = newExpense.amount;
+    if (typeof rawAmount === "string") {
+      rawAmount = rawAmount.replace(/\./g, "").replace(",", ".");
+    }
+    const numericAmount = Number(rawAmount);
+
+    if (!newExpense.description || isNaN(numericAmount) || numericAmount <= 0 || !newExpense.date) {
+      alert("Por favor, preencha todos os campos corretamente. Use formato de valor válido (ex: 150,50).");
+      return;
+    }
+    
+    let formattedDate = newExpense.date;
+    if (formattedDate.includes("-")) {
+      const [year, month, day] = formattedDate.split("-");
+      formattedDate = `${day}/${month}/${year}`;
+    }
+
     const exp: Expense = {
       id: Math.random().toString(),
       description: newExpense.description,
       category: newExpense.category as Expense["category"],
-      date: newExpense.date,
-      amount: Number(newExpense.amount),
+      date: formattedDate,
+      amount: numericAmount,
       status: newExpense.status as Expense["status"],
     };
     setExpenses([exp, ...expenses]);
@@ -69,7 +86,7 @@ export function ReportsView() {
 
       <div className="reports-grid">
         {/* Gráfico mensal */}
-        <section className="panel" style={{ padding: 24, gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 16 }}>
+        <section className="panel glass-card" style={{ padding: 24, gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 16 }}>
           <PanelHeader title="Faturamento Mensal" subtitle="Histórico de vendas dos últimos 12 meses" />
           <div style={{ height: 200, display: "flex", alignItems: "flex-end", gap: 8, marginTop: 16, borderBottom: "1px solid var(--line)", paddingBottom: 8 }}>
             {bars.map((bar, i) => (
@@ -82,11 +99,11 @@ export function ReportsView() {
         </section>
 
         {/* Detalhamento de gastos */}
-        <section className="panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+        <section className="panel glass-card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
           <PanelHeader title="Detalhamento de Gastos" subtitle="Distribuição por categoria" />
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {Object.entries(expenseBreakdown).map(([category, amount]) => {
-              const percentage = Math.round((amount / currentTotalExpenses) * 100);
+              const percentage = Math.round((amount / currentTotalExpenses) * 100) || 0;
               return (
                 <div key={category} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "var(--ink)" }}>
@@ -103,7 +120,7 @@ export function ReportsView() {
         </section>
 
         {/* Demonstrativo */}
-        <section className="panel" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+        <section className="panel glass-card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
           <PanelHeader title="Demonstrativo de Lucro" subtitle="Resultado Líquido do Período" />
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
@@ -120,7 +137,7 @@ export function ReportsView() {
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 4 }}>
               <span style={{ color: "var(--muted)", fontSize: "11px" }}>Margem de Lucro</span>
-              <strong style={{ color: "var(--ink)", fontSize: "11px" }}>{((netIncome / totalRevenue) * 100).toFixed(1)}%</strong>
+              <strong style={{ color: "var(--ink)", fontSize: "11px" }}>{totalRevenue > 0 ? ((netIncome / totalRevenue) * 100).toFixed(1) : "0.0"}%</strong>
             </div>
           </div>
         </section>
@@ -160,46 +177,202 @@ export function ReportsView() {
       {/* Modal de despesa */}
       {expenseModal && (
         <div className="modal-backdrop">
+          <style dangerouslySetInnerHTML={{ __html: `
+            .pro-modal {
+              background: linear-gradient(180deg, #13131a 0%, #0a0a0f 100%);
+              border: 1px solid rgba(255, 255, 255, 0.08);
+              box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+              border-radius: 20px;
+              padding: 32px;
+              width: 100%;
+              max-width: 480px;
+              position: relative;
+              font-family: var(--font-outfit), sans-serif;
+            }
+            .pro-modal h2 {
+              font-size: 24px;
+              font-weight: 700;
+              letter-spacing: -0.5px;
+              margin: 0 0 24px 0;
+              background: linear-gradient(90deg, #fff, #a1a1aa);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+            }
+            .pro-field-wrapper {
+              position: relative;
+              display: flex;
+              align-items: center;
+            }
+            .pro-field-wrapper svg {
+              position: absolute;
+              left: 14px;
+              color: rgba(255,255,255,0.4);
+              width: 18px;
+              height: 18px;
+              pointer-events: none;
+            }
+            .pro-input {
+              width: 100%;
+              height: 48px;
+              background: rgba(255, 255, 255, 0.02);
+              border: 1px solid rgba(255, 255, 255, 0.06);
+              border-radius: 12px;
+              color: white;
+              padding: 0 16px 0 42px;
+              font-size: 14px;
+              transition: all 0.2s;
+              outline: none;
+            }
+            .pro-input:focus {
+              background: rgba(255, 255, 255, 0.04);
+              border-color: var(--orange);
+              box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+            }
+            .pro-input::placeholder {
+              color: rgba(255, 255, 255, 0.3);
+            }
+            select.pro-input {
+              appearance: none;
+              background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+              background-repeat: no-repeat;
+              background-position: right 14px center;
+              padding-right: 40px;
+            }
+            .pro-input option {
+              background: var(--panel);
+              color: var(--ink);
+            }
+            .pro-label {
+              display: block;
+              font-size: 11px;
+              font-weight: 600;
+              color: var(--muted);
+              margin-bottom: 8px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .pro-amount-input {
+              height: 64px;
+              font-size: 24px;
+              font-weight: 700;
+              color: var(--orange);
+              padding-left: 48px;
+              border-color: rgba(245, 158, 11, 0.2);
+              background: rgba(245, 158, 11, 0.03);
+            }
+            .pro-amount-input:focus {
+              border-color: var(--orange);
+              box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+              background: rgba(245, 158, 11, 0.06);
+            }
+            .pro-amount-prefix {
+              position: absolute;
+              left: 16px;
+              font-size: 18px;
+              font-weight: 700;
+              color: var(--orange);
+              opacity: 0.7;
+              pointer-events: none;
+            }
+            .pro-button {
+              height: 52px;
+              border-radius: 12px;
+              background: linear-gradient(135deg, var(--orange) 0%, #d97706 100%);
+              border: none;
+              color: white;
+              font-size: 14px;
+              font-weight: 700;
+              cursor: pointer;
+              transition: all 0.2s;
+              box-shadow: 0 8px 24px rgba(245, 158, 11, 0.25);
+              margin-top: 12px;
+              width: 100%;
+            }
+            .pro-button:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 12px 32px rgba(245, 158, 11, 0.35);
+            }
+            .pro-close {
+              position: absolute;
+              top: 24px;
+              right: 24px;
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+              background: rgba(255,255,255,0.05);
+              border: 1px solid rgba(255,255,255,0.1);
+              color: var(--muted);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              transition: all 0.2s;
+            }
+            .pro-close:hover {
+              background: rgba(255,255,255,0.1);
+              color: white;
+            }
+          `}} />
           <button className="modal-scrim" type="button" aria-label="Fechar" onClick={() => setExpenseModal(false)} />
-          <section className="fee-modal" role="dialog" aria-modal="true" style={{ width: "100%", maxWidth: 480 }}>
-            <button className="modal-close" type="button" aria-label="Fechar" onClick={() => setExpenseModal(false)}>×</button>
-            <p className="eyebrow orange">FLUXO DE CAIXA</p>
-            <h2>Lançar Nova Despesa</h2>
-            <form onSubmit={handleAddExpense} style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24, textAlign: "left" }}>
-              <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
-                <span>Descrição da Despesa</span>
-                <input required placeholder="Ex: Compra de Hortifruti" value={newExpense.description || ""} onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })} style={fieldStyle} />
-              </label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
-                  <span>Categoria</span>
-                  <select value={newExpense.category} onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value as Expense["category"] })} style={fieldStyle}>
-                    <option value="Ingredientes">Ingredientes</option>
-                    <option value="Funcionários">Funcionários</option>
-                    <option value="Contas">Contas Fixas</option>
-                    <option value="Manutenção">Manutenção</option>
-                    <option value="Outros">Outros</option>
-                  </select>
-                </label>
-                <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
-                  <span>Data</span>
-                  <input required type="date" value={newExpense.date || ""} onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })} style={{ ...fieldStyle, colorScheme: "dark" }} />
-                </label>
+          <section className="pro-modal" role="dialog" aria-modal="true">
+            <button className="pro-close" type="button" aria-label="Fechar" onClick={() => setExpenseModal(false)}>
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{width: 16, height: 16}}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <h2>Lançar Despesa</h2>
+            <form onSubmit={handleAddExpense} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              
+              <div>
+                <span className="pro-label">Descrição</span>
+                <div className="pro-field-wrapper">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <input className="pro-input" required placeholder="Ex: Compra de Hortifruti" value={newExpense.description || ""} onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })} />
+                </div>
               </div>
+
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
-                  <span>Valor (R$)</span>
-                  <input required type="number" step="0.01" min="0" placeholder="0.00" value={newExpense.amount || ""} onChange={(e) => setNewExpense({ ...newExpense, amount: Number(e.target.value) })} style={fieldStyle} />
-                </label>
-                <label className="fee-field" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
-                  <span>Status</span>
-                  <select value={newExpense.status} onChange={(e) => setNewExpense({ ...newExpense, status: e.target.value as Expense["status"] })} style={fieldStyle}>
-                    <option value="Pago">Pago</option>
-                    <option value="Pendente">Pendente</option>
-                  </select>
-                </label>
+                <div>
+                  <span className="pro-label">Categoria</span>
+                  <div className="pro-field-wrapper">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                    <select className="pro-input" value={newExpense.category} onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value as Expense["category"] })}>
+                      <option value="Ingredientes">Ingredientes</option>
+                      <option value="Funcionários">Funcionários</option>
+                      <option value="Contas">Contas Fixas</option>
+                      <option value="Manutenção">Manutenção</option>
+                      <option value="Outros">Outros</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <span className="pro-label">Data</span>
+                  <div className="pro-field-wrapper">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <input className="pro-input" required type="date" value={newExpense.date || ""} onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })} style={{ colorScheme: "dark" }} />
+                  </div>
+                </div>
               </div>
-              <button className="primary-button wide" type="submit" style={{ marginTop: 8 }}>Registrar Despesa</button>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 16 }}>
+                <div>
+                  <span className="pro-label">Valor</span>
+                  <div className="pro-field-wrapper">
+                    <span className="pro-amount-prefix">R$</span>
+                    <input className="pro-input pro-amount-input" required type="text" inputMode="decimal" placeholder="0,00" value={newExpense.amount ?? ""} onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })} />
+                  </div>
+                </div>
+                <div>
+                  <span className="pro-label">Status</span>
+                  <div className="pro-field-wrapper" style={{ height: "100%" }}>
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <select className="pro-input" value={newExpense.status} onChange={(e) => setNewExpense({ ...newExpense, status: e.target.value as Expense["status"] })} style={{ height: "100%", fontSize: 16 }}>
+                      <option value="Pago">Pago</option>
+                      <option value="Pendente">Pendente</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <button className="pro-button" type="submit">Registrar Despesa</button>
             </form>
           </section>
         </div>
