@@ -1,28 +1,27 @@
-@import "tailwindcss";
-@import "leaflet/dist/leaflet.css";
+/* Leaflet CSS é carregado de forma lazy dentro do TelemetryMap (DeliveryView) */
 
 :root {
   --ink: #ffffff;
   --muted: #a1a1aa;
-  --line: #27272a;
-  --canvas: #09090b;
-  --panel: #111116;
+  --line: rgba(255, 255, 255, 0.08);
+  --canvas: #050507;
+  --panel: #0d0d12;
   --forest: #14141a;
-  --purple: #6e30eb;
-  --purple-glow: rgba(110, 48, 235, 0.2);
-  --purple-soft: #231936;
-  --green: #00e676;
-  --green-soft: #122b22;
-  --blue: #00b0ff;
-  --blue-soft: #132433;
-  --orange: #ff9100;
-  --orange-soft: #2b1f15;
-  --red: #ff1744;
-  --red-soft: #2e151b;
-  --surface: rgba(255, 255, 255, 0.04);
-  --surface-hover: rgba(255, 255, 255, 0.08);
-  --backdrop: rgba(13, 28, 22, 0.55);
-  --shadow: 0 10px 40px rgba(0,0,0,0.5);
+  --purple: #8b5cf6;
+  --purple-glow: rgba(139, 92, 246, 0.25);
+  --purple-soft: rgba(139, 92, 246, 0.12);
+  --green: #10b981;
+  --green-soft: rgba(16, 185, 129, 0.12);
+  --blue: #3b82f6;
+  --blue-soft: rgba(59, 130, 246, 0.12);
+  --orange: #f59e0b;
+  --orange-soft: rgba(245, 158, 11, 0.12);
+  --red: #ef4444;
+  --red-soft: rgba(239, 68, 68, 0.12);
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --backdrop: rgba(0, 0, 0, 0.7);
+  --shadow: 0 10px 40px rgba(0,0,0,0.6);
 }
 
 :root[data-theme="light"] {
