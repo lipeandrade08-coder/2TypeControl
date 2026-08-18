@@ -71,7 +71,8 @@ export function WaiterView({
   const cartTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   return (
-    <div className="waiter-backdrop" style={{ background: "var(--background)", minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
+    <div className="waiter-backdrop" style={{ background: "var(--background)" }}>
+      <div className="waiter-frame" style={{ background: "var(--background)", display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
       {/* HEADER */}
       <div style={{ padding: "20px 20px 16px", background: "var(--panel)", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 10 }}>
         {selectedTable ? (
@@ -315,6 +316,7 @@ export function WaiterView({
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
