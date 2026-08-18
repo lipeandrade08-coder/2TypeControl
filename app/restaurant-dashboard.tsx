@@ -25,6 +25,7 @@ import { DeliveryView } from "./_views/DeliveryView";
 import { ReportsView } from "./_views/ReportsView";
 import { CrmView } from "./_views/CrmView";
 import { IntegrationsView } from "./_views/IntegrationsView";
+import { SettingsView } from "./_views/SettingsView";
 import { KdsView } from "./_views/KdsView";
 import { WaiterView } from "./_views/WaiterView";
 import { DriverView } from "./_views/DriverView";
@@ -36,16 +37,18 @@ export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
   // Navigation filtered by role
   const filteredNavigation = useMemo(() => {
     if (role === "admin") return navigation;
-    if (role === "balcao") return navigation.filter((n) => ["Visão geral", "Pedidos", "WhatsApp", "Salão", "Entregas"].includes(n.label));
+    if (role === "balcao") return navigation.filter((n) => ["Visão geral", "Pedidos", "WhatsApp", "Salão"].includes(n.label));
     if (role === "garcom") return navigation.filter((n) => ["Salão", "Cardápio"].includes(n.label));
     if (role === "cozinha") return navigation.filter((n) => ["Pedidos", "Cardápio"].includes(n.label));
-    return navigation;
+    if (role === "entregador") return navigation.filter((n) => ["Entregas"].includes(n.label));
+    return navigation.filter((n) => ["Visão geral"].includes(n.label)); // fallback seguro
   }, [role]);
 
   // Default view based on role
   const defaultView = useMemo<View>(() => {
     if (role === "garcom") return "Salão";
     if (role === "cozinha") return "Pedidos";
+    if (role === "entregador") return "Entregas";
     return "Visão geral";
   }, [role]);
 
@@ -56,6 +59,22 @@ export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
   const feeInputRef = useRef<HTMLInputElement>(null);
   const toastTimerRef = useRef<number | undefined>(undefined);
   const activeUnitRef = useRef<"Matriz" | "Jardins">("Matriz");
+
+  // Sync orders from API
+  useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        const response = await fetch("/api/menu-items");
+        if (response.ok) {
+          const data = (await response.json()) as any;
+          if (data.items) setMenuItems(data.items);
+        }
+      } catch (err) {
+        console.error("Failed to fetch menu items", err);
+      }
+    };
+    fetchMenu();
+  }, []);
 
   // Sync orders from API
   useEffect(() => {
@@ -82,6 +101,42 @@ export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
     void fetchOrders();
     const interval = window.setInterval(fetchOrders, 15_000);
     return () => { mounted = false; controller?.abort(); window.clearInterval(interval); };
+  }, []);
+
+  // Carrega configurações da loja (taxa de serviço, etc.)
+  const [serviceFeeActive, setServiceFeeActive] = useState(true); // padrão: ativo
+  useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("2type-token") : null;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    fetch("/api/settings", { headers })
+      .then((r) => r.ok ? (r.json() as Promise<Record<string, string>>) : Promise.resolve(null))
+      .then((data) => {
+        if (!data) return;
+        if ("service_fee_active" in data) {
+          setServiceFeeActive(data.service_fee_active === "true");
+        }
+        if ("num_tables" in data) {
+          const limit = parseInt(data.num_tables, 10);
+          if (!isNaN(limit)) {
+            setTables(prev => {
+              // Mantém apenas as mesas cujo número é <= limit, ou expande se limit for maior
+              let next = prev.filter(t => t.number <= limit);
+              const currentMax = prev.length > 0 ? Math.max(...prev.map(t => t.number)) : 0;
+              if (limit > currentMax) {
+                for (let i = currentMax + 1; i <= limit; i++) {
+                  next.push({
+                    number: i, seats: 4, status: "Livre", guests: 0, total: 0, items: [],
+                    x: 10 + ((i * 12) % 70), y: 10 + ((i * 8) % 70), width: 96, height: 72, area: "salao"
+                  });
+                }
+              }
+              return next;
+            });
+          }
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const [tables, setTables] = useState([...initialTables, ...initialVarandaTables]);
@@ -118,6 +173,19 @@ export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
   const [kdsMode, setKdsMode] = useState(false);
   const [waiterMode, setWaiterMode] = useState(false);
   const [clientSimulatorTable, setClientSimulatorTable] = useState<number | null>(null);
+
+  // Logged user — read from localStorage (written at login)
+  const [loggedUser] = useState(() => {
+    if (typeof window === "undefined") return { name: "", role };
+    return {
+      name: localStorage.getItem("userName") ?? "",
+      role: (localStorage.getItem("userRole") as typeof role) ?? role,
+    };
+  });
+
+  const displayName = loggedUser.name || (role === "admin" ? "Barbosa" : role === "balcao" ? "Caixa Central" : role === "garcom" ? "Garçom" : role === "cozinha" ? "Cozinha" : "Entregador");
+  const displayRole = role === "admin" ? "Administrador" : role === "balcao" ? "Balconista" : role === "garcom" ? "Atendimento" : role === "cozinha" ? "Produção" : "Entregador";
+  const displayInitials = displayName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || role.slice(0, 2).toUpperCase();
 
   useEffect(() => { activeUnitRef.current = activeUnit; }, [activeUnit]);
 
@@ -203,21 +271,37 @@ export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
     ));
     setFeeModal(false);
     notify(`Taxa adicionada. Pedido #${pendingFee.id} confirmado.`);
+
+    fetch(`/api/orders/${pendingFee.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ total: Math.round((pendingFee.total + fee) * 100), driverFee: Math.round(dFee * 100), feePending: false, status: "Confirmado" })
+    }).catch(console.error);
   };
 
   const advanceOrder = (id: number) => {
     const flow: OrderStatus[] = ["Novo", "Confirmado", "Em preparo", "Pronto", "Despachado", "Saiu", "Entregue"];
     let justFinished = false;
+    let nextStatus: OrderStatus | undefined;
     setOrders((current) => current.map((order) => {
       if (order.id !== id || order.feePending) return order;
       const currentIdx = flow.indexOf(order.status);
       const nextIdx = Math.min(currentIdx + 1, flow.length - 1);
       if (nextIdx === flow.length - 1 && currentIdx !== flow.length - 1) justFinished = true;
-      return { ...order, status: flow[nextIdx] };
+      nextStatus = flow[nextIdx];
+      return { ...order, status: nextStatus };
     }));
     if (justFinished) playSound("success");
     else playSound("pop");
     notify("Etapa do pedido atualizada.");
+
+    if (nextStatus) {
+      fetch(`/api/orders/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus })
+      }).catch(console.error);
+    }
   };
 
   const openAddItemModal = () => { setCart([]); setAddItemModal(true); };
@@ -258,17 +342,36 @@ export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
 
   const closeTable = () => {
     if (!paymentMethod && table.total > 0) { notify("Selecione um método de pagamento."); return; }
+    const fee = serviceFeeActive ? table.total * 0.1 : 0;
     setTables((current) => current.map((item) =>
       item.number === selectedTable ? { ...item, status: "Livre", guests: 0, total: 0, time: undefined, items: [] } : item
     ));
     setCheckoutModal(false);
     playSound("success");
-    notify(`Mesa ${String(selectedTable).padStart(2, "00")} paga via ${paymentMethod || "Dinheiro"} e liberada.`);
+    const totalPaid = table.total + fee - appliedDiscount;
+    notify(`Mesa ${String(selectedTable).padStart(2, "00")} paga via ${paymentMethod || "Dinheiro"} — ${formatMoney(totalPaid)} — e liberada.`);
   };
 
   const chooseView = (view: View) => { setActiveView(view); setMobileMenu(false); setShowNotifications(false); };
 
-  const addOrder = (order: Order) => { setOrders((current) => [order, ...current]); notify(`Pedido #${order.id} criado com sucesso!`); playSound("ding"); };
+  const addOrder = (order: Order) => {
+    setOrders((current) => [order, ...current]); 
+    notify(`Pedido #${order.id} criado com sucesso!`); 
+    playSound("ding"); 
+
+    fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customer: order.customer,
+        channel: order.channel,
+        detail: order.detail,
+        total: Math.round(order.total * 100),
+        time: order.time,
+        status: order.status
+      })
+    }).catch(console.error);
+  };
 
   const openReserveModal = (tableNum: number) => { setReserveTableNum(tableNum); setReserveData({ name: "", time: "", guests: 2 }); setReserveModal(true); };
 
@@ -417,11 +520,11 @@ export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
             <span><strong>Integrações</strong><small>3 de 4 conectadas</small></span>
             <span className="integration-progress"><i /></span>
           </button>
-          <div className="user-card" onClick={() => window.location.href = "/"} title="Sair do Sistema">
-            <span className="user-avatar">RS</span>
+          <div className="user-card" role="button" tabIndex={0} onClick={() => { localStorage.removeItem("userRole"); localStorage.removeItem("userName"); localStorage.removeItem("2type-token"); window.location.href = "/"; }} onKeyDown={(e) => e.key === "Enter" && (window.location.href = "/")} title="Sair do Sistema" style={{ cursor: "pointer" }}>
+            <span className="user-avatar">{displayInitials}</span>
             <span>
-              <strong>{role === "admin" ? "Rafael Santos" : role === "balcao" ? "Caixa Central" : role === "garcom" ? "Garçom" : "Cozinha"}</strong>
-              <small>{role === "admin" ? "Administrador" : role === "balcao" ? "Balconista" : role === "garcom" ? "Atendimento" : "Produção"}</small>
+              <strong>{displayName}</strong>
+              <small>{displayRole}</small>
             </span>
             <span className="more" style={{ color: "var(--red)", fontSize: 18 }}>⍈</span>
           </div>
@@ -433,7 +536,7 @@ export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
         <header className="topbar">
           <button className="mobile-menu-button" type="button" aria-label="Abrir menu" aria-expanded={mobileMenu} onClick={() => setMobileMenu(true)}>☰</button>
           <div>
-            <h1>{activeView === "Visão geral" ? "Bom dia, Rafael! 👋" : activeView}</h1>
+            <h1>{activeView === "Visão geral" ? `${new Date().getHours() < 12 ? "Bom dia" : new Date().getHours() < 18 ? "Boa tarde" : "Boa noite"}${role === "balcao" ? "" : `, ${displayName.split(" ")[0]}`}! 👋` : activeView}</h1>
             {activeView === "Visão geral" && (
               <p className="topbar-subtitle">{todayLabel} <span>•</span> <b><i /> Restaurante aberto</b></p>
             )}
@@ -452,13 +555,13 @@ export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
               {showNotifications && (
                 <>
                   <button type="button" aria-label="Fechar notificações" style={{ position: "fixed", inset: 0, background: "transparent", border: 0, zIndex: 190, cursor: "default" }} onClick={() => setShowNotifications(false)} />
-                  <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 14, width: 340, zIndex: 200, boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+                  <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 14, width: 340, zIndex: 200, boxShadow: "0 20px 60px var(--black-50)" }}>
                     <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--line)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <strong style={{ fontSize: 14 }}>Notificações</strong>
                       <button type="button" onClick={() => setNotifications((n) => n.map((x) => ({ ...x, read: true })))} style={{ background: "transparent", border: 0, color: "var(--orange)", cursor: "pointer", fontSize: 11, fontWeight: 600 }}>Marcar todas como lidas</button>
                     </div>
                     {notifications.map((n) => (
-                      <div key={n.id} style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", background: n.read ? "transparent" : "var(--purple-soft)", display: "flex", gap: 10, cursor: "pointer" }}
+                      <div key={n.id} style={{ padding: "12px 16px", borderBottom: "1px solid var(--glass-04)", background: n.read ? "transparent" : "var(--purple-soft)", display: "flex", gap: 10, cursor: "pointer" }}
                         onClick={() => setNotifications((ns) => ns.map((x) => x.id === n.id ? { ...x, read: true } : x))}>
                         <div style={{ width: 8, height: 8, borderRadius: "50%", background: n.read ? "transparent" : "var(--purple)", marginTop: 5, flexShrink: 0, border: n.read ? "1px solid var(--line)" : "none" }} />
                         <div style={{ flex: 1 }}>
@@ -508,6 +611,7 @@ export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
         {activeView === "Relatórios" && <ReportsView />}
         {activeView === "CRM" && <CrmView />}
         {activeView === "Integrações" && <IntegrationsView />}
+        {activeView === "Configurações" && <SettingsView />}
       </main>
 
       {/* ─── Modal: Taxa de entrega ─────────────────────── */}
@@ -517,7 +621,7 @@ export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
             .pro-fee-modal {
               background: linear-gradient(180deg, var(--panel) 0%, var(--surface) 100%);
               border: 1px solid var(--line);
-              box-shadow: 0 40px 100px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+              box-shadow: 0 40px 100px var(--black-30), inset 0 1px 0 var(--glass-05);
               border-radius: 24px;
               padding: 32px;
               width: 100%;
@@ -760,9 +864,14 @@ export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
               <div>
                 <div className="checkout-summary">
                   <div className="checkout-summary-row"><span>Subtotal</span><strong>{formatMoney(table.total)}</strong></div>
-                  <div className="checkout-summary-row"><span>Serviço (10%)</span><strong>{formatMoney(table.total * 0.1)}</strong></div>
+                  {serviceFeeActive && (
+                    <div className="checkout-summary-row"><span>Serviço (10%)</span><strong>{formatMoney(table.total * 0.1)}</strong></div>
+                  )}
+                  {!serviceFeeActive && (
+                    <div className="checkout-summary-row" style={{ color: "var(--green)", fontSize: 12 }}><span>Taxa de serviço</span><strong>Não cobrada</strong></div>
+                  )}
                   {appliedDiscount > 0 && <div className="checkout-summary-row" style={{ color: "var(--orange)" }}><span>Desconto</span><strong>- {formatMoney(appliedDiscount)}</strong></div>}
-                  <div className="checkout-summary-row total"><span>Total a Pagar</span><strong>{formatMoney(table.total * 1.1 - appliedDiscount)}</strong></div>
+                  <div className="checkout-summary-row total"><span>Total a Pagar</span><strong>{formatMoney(table.total * (serviceFeeActive ? 1.1 : 1) - appliedDiscount)}</strong></div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--purple-soft)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: 10, padding: "10px 14px", marginTop: 12 }}>
                   <span style={{ fontSize: 12, color: "var(--muted)" }}>Dividir conta</span>
@@ -771,7 +880,7 @@ export function RestaurantDashboard({ role = "admin" }: { role?: AppRole }) {
                     <span style={{ fontWeight: 700, fontSize: 14, minWidth: 24, textAlign: "center" }}>{splitCount}x</span>
                     <button type="button" onClick={() => setSplitCount(splitCount + 1)} style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--surface-hover)", border: 0, color: "var(--ink)", cursor: "pointer", display: "grid", placeItems: "center" }}>+</button>
                   </div>
-                  {splitCount > 1 && <span style={{ fontSize: 12, color: "var(--green)", fontWeight: 700 }}>{formatMoney((table.total * 1.1 - appliedDiscount) / splitCount)}/pessoa</span>}
+                  {splitCount > 1 && <span style={{ fontSize: 12, color: "var(--green)", fontWeight: 700 }}>{formatMoney((table.total * (serviceFeeActive ? 1.1 : 1) - appliedDiscount) / splitCount)}/pessoa</span>}
                 </div>
                 <div className="payment-methods">
                   {(["Pix", "Crédito", "Débito"] as const).map((method) => (

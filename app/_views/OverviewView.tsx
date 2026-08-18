@@ -20,7 +20,7 @@ export function OverviewView({
   onAdvance,
 }: {
   orders: Order[];
-  tables: { number: number; status: string }[];
+  tables: { number: number; status: string; guests?: number }[];
   pendingFee?: Order;
   aiEnabled: boolean;
   onToggleAi: () => void;
@@ -30,14 +30,22 @@ export function OverviewView({
   onAdvance: (id: number) => void;
 }) {
   const occupied = tables.filter((t) => t.status === "Ocupada" || t.status === "Conta").length;
+  const totalGuests = tables.reduce((acc, t) => acc + (t.guests || 0), 0);
+
+  const totalSales = orders.reduce((acc, o) => acc + o.total, 0);
+  const totalOrders = orders.length;
+  const inProgressOrders = orders.filter((o) => o.status !== "Entregue" && o.status !== "Despachado").length;
+  
+  const whatsappOrders = orders.filter((o) => o.channel === "WhatsApp").length;
+  const whatsappPercent = totalOrders > 0 ? Math.round((whatsappOrders / totalOrders) * 100) : 0;
 
   return (
     <div className="page-content overview-page">
       <section className="metric-grid">
-        <Metric title="Vendas hoje" value="R$ 3.842,50" note="12,8% vs. sábado passado" color="purple" icon="🛍️" path="M0,25 Q10,15 20,22 T40,20 T60,28 T80,24 T100,10" />
-        <Metric title="Pedidos" value="47" note="9 em andamento" color="green" icon="📋" path="M0,28 Q15,28 30,20 T60,25 T90,20 T100,22" />
-        <Metric title="Via WhatsApp" value="31" note="66% dos pedidos" color="blue" icon="💬" path="M0,20 Q20,30 40,15 T80,25 T100,20" />
-        <Metric title="Mesas ocupadas" value={`${occupied} / ${tables.length}`} note="21 clientes no salão" color="orange" icon="👥" path="M0,20 Q20,10 40,25 T70,15 T100,20" />
+        <Metric title="Vendas hoje" value={formatMoney(totalSales)} note="Métricas em tempo real" color="purple" icon="🛍️" path="M0,25 Q10,15 20,22 T40,20 T60,28 T80,24 T100,10" />
+        <Metric title="Pedidos" value={String(totalOrders)} note={`${inProgressOrders} em andamento`} color="green" icon="📋" path="M0,28 Q15,28 30,20 T60,25 T90,20 T100,22" />
+        <Metric title="Via WhatsApp" value={String(whatsappOrders)} note={`${whatsappPercent}% dos pedidos`} color="blue" icon="💬" path="M0,20 Q20,30 40,15 T80,25 T100,20" />
+        <Metric title="Mesas ocupadas" value={`${occupied} / ${tables.length}`} note={`${totalGuests} clientes no salão`} color="orange" icon="👥" path="M0,20 Q20,10 40,25 T70,15 T100,20" />
       </section>
 
       {pendingFee && (
@@ -126,9 +134,9 @@ export function OverviewView({
         <h2>Resumo de vendas</h2>
         <select><option>Últimos 7 dias ⌄</option></select>
         <div className="bottom-metrics">
-          <div className="bottom-metric"><small>Total</small><strong>R$ 24.850,00</strong></div>
-          <div className="bottom-metric"><small>Média diária</small><strong>R$ 3.550,00</strong></div>
-          <div className="bottom-metric"><small>Ticket médio</small><strong>R$ 78,40</strong></div>
+          <div className="bottom-metric"><small>Total</small><strong>{formatMoney(totalSales)}</strong></div>
+          <div className="bottom-metric"><small>Média diária</small><strong>{formatMoney(totalSales)}</strong></div>
+          <div className="bottom-metric"><small>Ticket médio</small><strong>{formatMoney(totalOrders > 0 ? totalSales / totalOrders : 0)}</strong></div>
         </div>
         <svg className="bottom-chart-mock" viewBox="0 0 1000 120" preserveAspectRatio="none">
           <defs>

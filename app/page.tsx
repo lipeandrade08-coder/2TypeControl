@@ -11,33 +11,83 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    // Simulate network delay for nice motion effect
-    setTimeout(() => {
-      if (email === "admin@2type.com" && password === "admin123") {
-        router.push("/admin");
-      } else if (email === "balcao@2type.com" && password === "balcao123") {
-        router.push("/balcao");
-      } else if (email === "garcom@2type.com" && password === "garcom123") {
-        router.push("/garcom");
-      } else if (email === "cozinha@2type.com" && password === "cozinha123") {
-        router.push("/cozinha");
-      } else if (email === "entregador@2type.com" && password === "entregador123") {
-        router.push("/entregador");
-      } else {
-        setError("E-mail ou senha incorretos.");
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        setError(data.error || "E-mail ou senha incorretos.");
+        setLoading(false);
+        return;
+      }
+
+      const user = await res.json() as { role: string; name: string; token?: string };
+
+      // Armazenar info de sessão no localStorage
+      if (typeof window !== "undefined") {
+        localStorage.setItem("userRole", user.role);
+        localStorage.setItem("userName", user.name);
+        if (user.token) localStorage.setItem("2type-token", user.token);
+      }
+
+      // Redireciona baseado na role
+      if (user.role === "admin") router.push("/admin");
+      else if (user.role === "balcao") router.push("/balcao");
+      else if (user.role === "garcom") router.push("/garcom");
+      else if (user.role === "cozinha") router.push("/cozinha");
+      else if (user.role === "entregador") router.push("/entregador");
+      else {
+        setError("Nível de acesso desconhecido.");
         setLoading(false);
       }
-    }, 600);
+    } catch (err) {
+      setError("Erro ao tentar fazer login.");
+      setLoading(false);
+    }
   };
 
-  const quickLogin = (roleEmail: string, rolePass: string) => {
+  const quickLogin = async (roleEmail: string, rolePass: string) => {
     setEmail(roleEmail);
     setPassword(rolePass);
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: roleEmail, password: rolePass }),
+      });
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        setError(data.error || "E-mail ou senha incorretos.");
+        setLoading(false);
+        return;
+      }
+      const user = await res.json() as { role: string; name: string; token?: string };
+      if (typeof window !== "undefined") {
+        localStorage.setItem("userRole", user.role);
+        localStorage.setItem("userName", user.name);
+        if (user.token) localStorage.setItem("2type-token", user.token);
+      }
+      if (user.role === "admin") router.push("/admin");
+      else if (user.role === "balcao") router.push("/balcao");
+      else if (user.role === "garcom") router.push("/garcom");
+      else if (user.role === "cozinha") router.push("/cozinha");
+      else if (user.role === "entregador") router.push("/entregador");
+      else { setError("Nível de acesso desconhecido."); setLoading(false); }
+    } catch {
+      setError("Erro ao tentar fazer login.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -95,39 +145,39 @@ export default function LoginPage() {
           pointer-events: none;
         }
         .glass-panel {
-          background: rgba(255, 255, 255, 0.03);
+          background: var(--glass-03);
           backdrop-filter: blur(24px);
           -webkit-backdrop-filter: blur(24px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid var(--glass-08);
           border-radius: 24px;
-          box-shadow: 0 30px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+          box-shadow: 0 30px 80px var(--black-50), inset 0 1px 0 var(--glass-10);
           padding: 48px 40px;
           position: relative;
           z-index: 10;
           animation: fadeSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         .glass-input {
-          background: rgba(0, 0, 0, 0.2);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: var(--black-20);
+          border: 1px solid var(--glass-10);
           border-radius: 12px;
           color: #fff;
           transition: all 0.3s ease;
         }
         .glass-input:focus {
-          background: rgba(0, 0, 0, 0.4);
+          background: var(--black-40);
           border-color: rgba(139, 92, 246, 0.6);
           box-shadow: 0 0 15px rgba(139, 92, 246, 0.3), inset 0 0 8px rgba(139, 92, 246, 0.1);
           outline: none;
         }
         .glass-input::placeholder {
-          color: rgba(255,255,255,0.2);
+          color: var(--glass-20);
         }
         .demo-btn {
           position: relative;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--glass-03);
+          border: 1px solid var(--glass-08);
           border-radius: 16px;
-          color: rgba(255, 255, 255, 0.7);
+          color: var(--glass-70);
           transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
           overflow: hidden;
           z-index: 1;
@@ -138,7 +188,7 @@ export default function LoginPage() {
           content: '';
           position: absolute;
           inset: 0;
-          background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.1) 0%, transparent 60%);
+          background: radial-gradient(circle at 50% 0%, var(--glass-10) 0%, transparent 60%);
           opacity: 0;
           transition: opacity 0.4s ease;
           z-index: -1;
@@ -150,14 +200,14 @@ export default function LoginPage() {
           position: absolute;
           top: 0; left: -150%;
           width: 50%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+          background: linear-gradient(90deg, transparent, var(--glass-15), transparent);
           transform: skewX(-20deg);
           transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
           z-index: -1;
         }
 
         .demo-btn:hover {
-          background: rgba(255, 255, 255, 0.06);
+          background: var(--glass-06);
           border-color: rgba(139, 92, 246, 0.4);
           color: #fff;
           transform: translateY(-3px);
@@ -195,7 +245,7 @@ export default function LoginPage() {
           position: absolute;
           top: 0; left: -100%;
           width: 50%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+          background: linear-gradient(90deg, transparent, var(--glass-30), transparent);
           transform: skewX(-20deg);
           transition: all 0.6s ease;
           z-index: -1;
@@ -217,7 +267,7 @@ export default function LoginPage() {
         }
       `}} />
 
-      <div className="login-bg">
+      <div className="login-bg force-dark">
         <div className="blob-1" />
         <div className="blob-2" />
         <div className="blob-3" />
@@ -228,7 +278,7 @@ export default function LoginPage() {
             <img 
               src="/logopng.png" 
               alt="2Type Control Logo" 
-              style={{ width: "180px", margin: "0 auto", filter: "drop-shadow(0 10px 20px rgba(0,0,0,0.5))" }} 
+              style={{ width: "180px", margin: "0 auto", filter: "drop-shadow(0 10px 20px var(--black-50))" }} 
             />
           </div>
 
@@ -236,13 +286,13 @@ export default function LoginPage() {
             <h1 style={{ fontSize: "28px", marginBottom: "8px", textAlign: "center", fontWeight: 800, letterSpacing: "-0.5px", background: "linear-gradient(to right, #fff, #a1a1aa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               Acesso ao Sistema
             </h1>
-            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", textAlign: "center", marginBottom: "36px" }}>
+            <p style={{ color: "var(--glass-60)", fontSize: "14px", textAlign: "center", marginBottom: "36px" }}>
               Entre com suas credenciais corporativas.
             </p>
 
             <form onSubmit={handleLogin}>
               <div style={{ marginBottom: "20px" }}>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>E-mail corporativo</label>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--glass-50)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>E-mail corporativo</label>
                 <input 
                   type="email" 
                   value={email}
@@ -255,7 +305,7 @@ export default function LoginPage() {
               </div>
               
               <div style={{ marginBottom: "28px" }}>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Senha de acesso</label>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--glass-50)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Senha de acesso</label>
                 <input 
                   type="password" 
                   value={password}
@@ -288,7 +338,7 @@ export default function LoginPage() {
           </div>
 
           <div style={{ marginTop: "40px", animation: "fadeSlideUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards", animationDelay: "0.2s", opacity: 0 }}>
-            <p style={{ textAlign: "center", fontSize: "10px", color: "rgba(255,255,255,0.3)", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "2px", fontWeight: 800 }}>
+            <p style={{ textAlign: "center", fontSize: "10px", color: "var(--glass-30)", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "2px", fontWeight: 800 }}>
               Acessos de Demonstração
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>

@@ -145,7 +145,7 @@ export function ReportsView() {
 
       {/* Tabela de despesas */}
       <div className="spreadsheet-container" style={{ marginTop: 24 }}>
-        <div className="spreadsheet-toolbar" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: 16 }}>
+        <div className="spreadsheet-toolbar" style={{ borderBottom: "1px solid var(--glass-05)", paddingBottom: 16 }}>
           <PanelHeader title="Controle de Despesas" subtitle="Últimos lançamentos de fluxo de caixa" />
         </div>
         <div className="spreadsheet-table-wrapper">
@@ -180,8 +180,8 @@ export function ReportsView() {
           <style dangerouslySetInnerHTML={{ __html: `
             .pro-modal {
               background: linear-gradient(180deg, #13131a 0%, #0a0a0f 100%);
-              border: 1px solid rgba(255, 255, 255, 0.08);
-              box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+              border: 1px solid var(--glass-08);
+              box-shadow: 0 40px 100px var(--black-50), inset 0 1px 0 var(--glass-10);
               border-radius: 20px;
               padding: 32px;
               width: 100%;
@@ -206,7 +206,7 @@ export function ReportsView() {
             .pro-field-wrapper svg {
               position: absolute;
               left: 14px;
-              color: rgba(255,255,255,0.4);
+              color: var(--glass-40);
               width: 18px;
               height: 18px;
               pointer-events: none;
@@ -214,8 +214,8 @@ export function ReportsView() {
             .pro-input {
               width: 100%;
               height: 48px;
-              background: rgba(255, 255, 255, 0.02);
-              border: 1px solid rgba(255, 255, 255, 0.06);
+              background: var(--glass-02);
+              border: 1px solid var(--glass-06);
               border-radius: 12px;
               color: white;
               padding: 0 16px 0 42px;
@@ -224,12 +224,12 @@ export function ReportsView() {
               outline: none;
             }
             .pro-input:focus {
-              background: rgba(255, 255, 255, 0.04);
+              background: var(--glass-04);
               border-color: var(--orange);
               box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
             }
             .pro-input::placeholder {
-              color: rgba(255, 255, 255, 0.3);
+              color: var(--glass-30);
             }
             select.pro-input {
               appearance: none;
@@ -299,8 +299,8 @@ export function ReportsView() {
               width: 32px;
               height: 32px;
               border-radius: 50%;
-              background: rgba(255,255,255,0.05);
-              border: 1px solid rgba(255,255,255,0.1);
+              background: var(--glass-05);
+              border: 1px solid var(--glass-10);
               color: var(--muted);
               display: flex;
               align-items: center;
@@ -309,7 +309,7 @@ export function ReportsView() {
               transition: all 0.2s;
             }
             .pro-close:hover {
-              background: rgba(255,255,255,0.1);
+              background: var(--glass-10);
               color: white;
             }
           `}} />

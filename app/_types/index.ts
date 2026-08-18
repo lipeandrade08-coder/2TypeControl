@@ -9,7 +9,8 @@ export type View =
   | "Entregas"
   | "Relatórios"
   | "CRM"
-  | "Integrações";
+  | "Integrações"
+  | "Configurações";
 
 export type OrderStatus =
   | "Novo"
@@ -76,6 +77,7 @@ export type Conversation = {
 };
 
 export type MenuItem = {
+  id?: number;
   name: string;
   category: string;
   price: number;

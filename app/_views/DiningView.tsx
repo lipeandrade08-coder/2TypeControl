@@ -172,7 +172,7 @@ export function DiningView({
           <button type="button" onClick={() => setAssignWaiterTable(assignWaiterTable === selected.number ? null : selected.number)}>Trocar</button>
 
           {assignWaiterTable === selected.number && (
-            <div className="dropdown-menu" style={{ position: "absolute", top: "100%", right: "20px", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: "10px", padding: "8px", zIndex: 100, width: "200px", boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}>
+            <div className="dropdown-menu" style={{ position: "absolute", top: "100%", right: "20px", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: "10px", padding: "8px", zIndex: 100, width: "200px", boxShadow: "0 10px 40px var(--black-50)" }}>
               {waiters.map((w) => (
                 <button key={w.id} type="button" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "8px", background: "transparent", border: "0", cursor: "pointer", borderRadius: "6px", textAlign: "left", color: "var(--ink)" }}
                   onClick={() => { onUpdateTable({ ...selected, waiterId: w.id }); setAssignWaiterTable(null); onNotify(`${w.name} atribuído à Mesa ${selected.number}`); }}>

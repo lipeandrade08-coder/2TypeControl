@@ -16,7 +16,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="landing-page">
+    <div className="landing-page force-dark">
       {/* Navbar */}
       <nav className={`landing-nav ${scrolled ? "scrolled" : ""}`}>
         <div className="nav-container">
@@ -46,7 +46,7 @@ export default function LandingPage() {
             Automatize seu WhatsApp com IA, elimine o caos da cozinha e acompanhe seus motoboys em tempo real. Tudo em um único painel premium.
           </p>
           <div className="hero-actions animate-fade-in-up delay-3">
-            <button className="btn-primary glow-effect">Agendar Demonstração</button>
+            <button className="btn-primary glow-effect" onClick={() => router.push("/")}>Agendar Demonstração</button>
             <button className="btn-secondary" onClick={() => document.getElementById("precos")?.scrollIntoView({ behavior: "smooth" })}>Ver Planos</button>
           </div>
         </div>
@@ -85,7 +85,7 @@ export default function LandingPage() {
           {/* Mock: AI WhatsApp Chat */}
           <div className="art-card chat-art float-delay-2">
             <div className="chat-header">
-              <Image src="/logopng.png" width={24} height={24} alt="Avatar" className="chat-avatar" />
+              <div className="chat-avatar" style={{ background: "var(--purple)", borderRadius: "50%", width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>🤖</div>
               <div>
                 <strong>Copiloto IA</strong>
                 <span>Digitando...</span>
@@ -101,24 +101,56 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Video Showcase Section */}
+      {/* App Mockup Showcase Section */}
       <section className="video-showcase-section">
-        <div className="video-container animate-fade-in-up delay-3">
+        <div className="video-container animate-fade-in-up delay-3" style={{ background: "var(--panel)", display: "flex", flexDirection: "column" }}>
           <div className="video-browser-bar">
             <i></i><i></i><i></i>
           </div>
-          <video 
-            className="promo-video" 
-            autoPlay 
-            muted 
-            loop 
-            playsInline 
-            preload="metadata"
-            poster="/screenshots/dashboard.png"
-          >
-            <source src="/preciso_criar_um_video_institu.mp4" type="video/mp4" />
-            Seu navegador não suporta vídeos HTML5.
-          </video>
+          <div style={{ flex: 1, padding: "24px", display: "flex", gap: "24px" }}>
+            {/* Sidebar Mock */}
+            <div style={{ width: "200px", background: "var(--surface)", borderRadius: "12px", padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ height: "24px", width: "80%", background: "var(--line)", borderRadius: "6px" }}></div>
+              <div style={{ height: "16px", width: "100%", background: "var(--line)", borderRadius: "4px", marginTop: "24px" }}></div>
+              <div style={{ height: "16px", width: "90%", background: "var(--line)", borderRadius: "4px" }}></div>
+              <div style={{ height: "16px", width: "95%", background: "var(--line)", borderRadius: "4px" }}></div>
+              <div style={{ height: "16px", width: "80%", background: "var(--purple)", borderRadius: "4px" }}></div>
+            </div>
+            {/* Main Content Mock */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "24px" }}>
+              <div style={{ display: "flex", gap: "16px" }}>
+                <div style={{ flex: 1, height: "100px", background: "var(--surface)", borderRadius: "12px", borderTop: "3px solid var(--purple)" }}></div>
+                <div style={{ flex: 1, height: "100px", background: "var(--surface)", borderRadius: "12px", borderTop: "3px solid var(--orange)" }}></div>
+                <div style={{ flex: 1, height: "100px", background: "var(--surface)", borderRadius: "12px", borderTop: "3px solid var(--green)" }}></div>
+              </div>
+              <div style={{ flex: 1, background: "var(--surface)", borderRadius: "12px", padding: "24px" }}>
+                <div style={{ height: "20px", width: "150px", background: "var(--line)", borderRadius: "4px", marginBottom: "24px" }}></div>
+                <div style={{ height: "40px", width: "100%", background: "var(--line)", borderRadius: "8px", marginBottom: "12px" }}></div>
+                <div style={{ height: "40px", width: "100%", background: "var(--line)", borderRadius: "8px", marginBottom: "12px" }}></div>
+                <div style={{ height: "40px", width: "100%", background: "var(--line)", borderRadius: "8px" }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof Strip */}
+      <section className="social-proof-strip">
+        <div className="stat-item">
+          <h4>+200</h4>
+          <p>Restaurantes</p>
+        </div>
+        <div className="stat-item">
+          <h4>R$ 5M+</h4>
+          <p>Processados</p>
+        </div>
+        <div className="stat-item">
+          <h4>30%</h4>
+          <p>Aumento em Vendas</p>
+        </div>
+        <div className="stat-item">
+          <h4>0</h4>
+          <p>Erros de Cozinha</p>
         </div>
       </section>
 
@@ -194,14 +226,14 @@ export default function LandingPage() {
         </div>
         <div className="vision-grid">
           <div className="vision-card">
-            <Image src="/photos/modern_kitchen.jpg" alt="Cozinha Profissional" fill className="vision-img" />
+            <div className="vision-img" style={{ background: "linear-gradient(135deg, var(--orange) 0%, var(--purple) 100%)", opacity: 0.15, width: "100%", height: "100%", position: "absolute" }} />
             <div className="vision-overlay">
               <h3>Controle Absoluto</h3>
               <p>Sua cozinha trabalhando em sincronia perfeita, sem erros de produção.</p>
             </div>
           </div>
           <div className="vision-card">
-            <Image src="/photos/cyber_delivery.jpg" alt="Entregador Rápido" fill className="vision-img" />
+            <div className="vision-img" style={{ background: "linear-gradient(135deg, var(--green) 0%, var(--blue) 100%)", opacity: 0.15, width: "100%", height: "100%", position: "absolute" }} />
             <div className="vision-overlay">
               <h3>Entregas Relâmpago</h3>
               <p>Roteirização inteligente e acompanhamento em tempo real para o cliente.</p>
@@ -263,6 +295,48 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      {/* Testimonials */}
+      <section className="testimonials-section">
+        <div className="section-header">
+          <h2>Quem usa, recomenda.</h2>
+          <p>O impacto real do 2TypeControl no dia a dia dos nossos parceiros.</p>
+        </div>
+        <div className="testimonials-grid">
+          <div className="testimonial-card glass-card hover-lift">
+            <div className="stars">★★★★★</div>
+            <p>"Depois que colocamos a IA pra responder o WhatsApp nas sextas, nossas vendas aumentaram 35% e ninguém mais reclama da demora."</p>
+            <div className="author">
+              <div className="author-avatar" style={{ background: "var(--orange)" }}>M</div>
+              <div>
+                <strong>Marcos Silva</strong>
+                <span>Pizzaria do Chef</span>
+              </div>
+            </div>
+          </div>
+          <div className="testimonial-card glass-card hover-lift delay-1">
+            <div className="stars">★★★★★</div>
+            <p>"O KDS mudou a vida da minha cozinha. Acabou aquela gritaria e a perda de comandas de papel. Agora sai tudo no tempo exato."</p>
+            <div className="author">
+              <div className="author-avatar" style={{ background: "var(--purple)" }}>C</div>
+              <div>
+                <strong>Carla Souza</strong>
+                <span>Hamburgueria BurgerHouse</span>
+              </div>
+            </div>
+          </div>
+          <div className="testimonial-card glass-card hover-lift delay-2">
+            <div className="stars">★★★★★</div>
+            <p>"Saber onde estão os motoboys me poupa de ter que ligar pra eles a cada 5 minutos. O cliente acompanha em tempo real, achei fantástico."</p>
+            <div className="author">
+              <div className="author-avatar" style={{ background: "var(--green)" }}>R</div>
+              <div>
+                <strong>Roberto Alves</strong>
+                <span>Delivery Express Sushi</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Pricing Section */}
       <section id="precos" className="pricing-section">
@@ -283,7 +357,7 @@ export default function LandingPage() {
               <li><span className="list-icon">✦</span> KDS (Tela da Cozinha)</li>
               <li><span className="list-icon">✦</span> Relatórios Básicos</li>
             </ul>
-            <button className="btn-price outline">Assinar Essencial</button>
+            <button className="btn-price outline" onClick={() => router.push("/")}>Assinar Essencial</button>
           </div>
 
           {/* Profissional */}
@@ -299,7 +373,7 @@ export default function LandingPage() {
               <li><span className="list-icon orange">✦</span> Cardápio Digital Integrado</li>
               <li><span className="list-icon orange">✦</span> Relatórios Financeiros Avançados</li>
             </ul>
-            <button className="btn-price glow-effect">Assinar Profissional</button>
+            <button className="btn-price glow-effect" onClick={() => router.push("/")}>Assinar Profissional</button>
           </div>
 
           {/* Futuro (IA) */}
@@ -314,8 +388,29 @@ export default function LandingPage() {
               <li><span className="list-icon purple">✦</span> Integração Bancária Automática</li>
               <li><span className="list-icon purple">✦</span> Suporte VIP Prioritário</li>
             </ul>
-            <button className="btn-price outline purple">Assinar Futuro</button>
+            <button className="btn-price outline purple" onClick={() => router.push("/")}>Assinar Futuro</button>
           </div>
+        </div>
+      </section>
+      {/* FAQ */}
+      <section className="faq-section">
+        <div className="section-header">
+          <h2>Perguntas Frequentes</h2>
+          <p>Tire suas dúvidas antes de assinar.</p>
+        </div>
+        <div className="faq-list">
+          <details className="faq-item glass-card">
+            <summary>Integra com o iFood?</summary>
+            <p>Sim! Todos os seus pedidos do iFood caem diretamente no nosso KDS da cozinha e no painel de Entregas, tudo unificado.</p>
+          </details>
+          <details className="faq-item glass-card">
+            <summary>Como funciona a IA do WhatsApp?</summary>
+            <p>Você conecta seu número de WhatsApp ao sistema. A IA lê e ouve os áudios dos clientes, responde com o cardápio e lança o pedido fechado direto na tela da cozinha e do caixa.</p>
+          </details>
+          <details className="faq-item glass-card">
+            <summary>Preciso de equipamentos caros?</summary>
+            <p>Não. O 2TypeControl roda na nuvem. Você pode usar qualquer computador, tablet ou celular com acesso à internet que você já possui no seu restaurante.</p>
+          </details>
         </div>
       </section>
 
@@ -323,8 +418,13 @@ export default function LandingPage() {
       <footer className="footer-cta">
         <h2>Pronto para dobrar as vendas do seu restaurante?</h2>
         <p>Junte-se à revolução dos restaurantes inteligentes hoje mesmo.</p>
-        <button className="btn-primary glow-effect large">Falar com um Consultor</button>
+        <button className="btn-primary glow-effect large" onClick={() => router.push("/")}>Falar com um Consultor</button>
       </footer>
+
+      {/* Floating WhatsApp */}
+      <a href="#" className="floating-whatsapp glow-effect" onClick={(e) => { e.preventDefault(); router.push("/"); }}>
+        Dúvidas? Fale com a gente
+      </a>
     </div>
   );
 }

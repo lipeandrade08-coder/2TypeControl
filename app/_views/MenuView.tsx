@@ -38,14 +38,32 @@ export function MenuView({
       sold: 0,
       available: newItem.available ?? true,
     };
-    setMenuItems([item, ...menuItems]);
-    setModalOpen(false);
-    setNewItem({ category: "Pizzas", available: true });
-    onNotify(`${item.name} adicionado ao cardápio com sucesso!`);
+    
+    // API Call
+    fetch("/api/menu-items", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(item)
+    }).then(r => r.json()).then((data: any) => {
+      if (data.item) {
+        setMenuItems([data.item, ...menuItems]);
+        setModalOpen(false);
+        setNewItem({ category: "Pizzas", available: true });
+        onNotify(`${data.item.name} adicionado ao cardápio com sucesso!`);
+      }
+    }).catch(console.error);
   };
 
-  const toggleAvailability = (name: string) => {
+  const toggleAvailability = (id: number | undefined, name: string) => {
     setMenuItems((current) => current.map((item) => item.name === name ? { ...item, available: !item.available } : item));
+    const target = menuItems.find(i => i.name === name);
+    if (target && id) {
+      fetch(`/api/menu-items/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ available: !target.available })
+      }).catch(console.error);
+    }
   };
 
   return (
@@ -75,7 +93,7 @@ export function MenuView({
             <span>{item.category}</span>
             <strong>{formatMoney(item.price)}</strong>
             <span>{item.sold} unidades</span>
-            <Toggle enabled={item.available} onToggle={() => toggleAvailability(item.name)} />
+            <Toggle enabled={item.available} onToggle={() => toggleAvailability(item.id, item.name)} />
             <button type="button" onClick={() => onNotify(`Opções de: ${item.name}`)}>•••</button>
           </div>
         ))}

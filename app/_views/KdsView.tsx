@@ -16,7 +16,7 @@ export function KdsView({
   );
 
   return (
-    <div className="kds-layout">
+    <div className="kds-layout force-dark">
       <header style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: "var(--orange)" }}>
           Monitor de Cozinha (KDS)
@@ -40,7 +40,7 @@ export function KdsView({
           </div>
         )}
         {pendingOrders.map((order) => (
-          <div key={order.id} style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+          <div key={order.id} style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", boxShadow: "0 4px 12px var(--black-05)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, borderBottom: "1px solid var(--line)", paddingBottom: 16 }}>
               <div>
                 <strong style={{ fontSize: 24, display: "block", color: "var(--ink)" }}>#{order.id}</strong>

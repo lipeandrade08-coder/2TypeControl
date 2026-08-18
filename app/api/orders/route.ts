@@ -1,5 +1,5 @@
 import { desc } from "drizzle-orm";
-import { ensureOrdersStorage, getDb } from "../../../db";
+import { ensureStorage, getDb } from "../../../db";
 import { orders } from "../../../db/schema";
 import { NextRequest } from "next/server";
 import { parseOrderPayload } from "./order-payload";
@@ -54,13 +54,33 @@ export async function GET(request: NextRequest) {
   if (!cors) return forbiddenOrigin();
 
   try {
-    await ensureOrdersStorage();
+    await ensureStorage();
     const db = getDb();
     const rows = await db
       .select()
       .from(orders)
       .orderBy(desc(orders.createdAt), desc(orders.id))
       .limit(50);
+
+    if (rows.length === 0) {
+      // Seed data if DB is empty
+      const { initialOrders } = await import("../../_data/mock-data");
+      for (const io of initialOrders) {
+        await db.insert(orders).values({
+          customer: io.customer,
+          channel: io.channel,
+          detail: io.detail,
+          total: Math.round(io.total * 100), // persist in cents
+          time: io.time,
+          status: io.status,
+          feePending: io.feePending,
+          driver: io.driver,
+          driverFee: io.driverFee ? Math.round(io.driverFee * 100) : undefined,
+        }).catch(() => {});
+      }
+      const seeded = await db.select().from(orders).orderBy(desc(orders.createdAt), desc(orders.id)).limit(50);
+      return Response.json({ orders: seeded.map(publicOrder) }, { headers: { ...JSON_HEADERS, ...cors } });
+    }
 
     return Response.json(
       { orders: rows.map(publicOrder) },
@@ -104,7 +124,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await ensureOrdersStorage();
+    await ensureStorage();
     const db = getDb();
     const [order] = await db
       .insert(orders)

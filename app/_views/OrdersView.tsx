@@ -37,7 +37,7 @@ export function OrdersView({
       return;
     }
     onAddOrder?.({
-      id: Math.floor(Math.random() * 9000) + 1000,
+      id: Date.now(),
       customer: localNewOrder.customer,
       channel: localNewOrder.channel,
       detail: localNewOrder.detail,

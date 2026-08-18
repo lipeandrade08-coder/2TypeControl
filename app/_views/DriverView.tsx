@@ -97,7 +97,7 @@ export function DriverView({
                 <div style={{ position: "relative", zIndex: 2 }}>
                   <div style={{ fontSize: 13, color: "var(--ink)", opacity: 0.8, marginBottom: 4, fontWeight: 600 }}>Ganhos do Dia</div>
                   <div style={{ fontSize: 36, fontWeight: 800, color: "var(--ink)", letterSpacing: "-1px", marginBottom: 8 }}>{formatMoney(earningsToday)}</div>
-                  <div style={{ fontSize: 12, color: "var(--blue)", fontWeight: 700, marginBottom: 16, background: "rgba(255,255,255,0.15)", padding: "4px 8px", borderRadius: 8, display: "inline-block" }}>
+                  <div style={{ fontSize: 12, color: "var(--blue)", fontWeight: 700, marginBottom: 16, background: "var(--glass-15)", padding: "4px 8px", borderRadius: 8, display: "inline-block" }}>
                     {deliveriesToday} corridas concluídas + gorjetas
                   </div>
                   
@@ -113,17 +113,17 @@ export function DriverView({
                             onBlur={() => setIsEditingGoal(false)} 
                             value={goal} 
                             onChange={e => setGoal(Number(e.target.value))} 
-                            style={{ width: 60, marginLeft: 8, background: "rgba(255,255,255,0.2)", color: "white", border: "1px solid white", borderRadius: 4, padding: "2px 6px", fontSize: 12, outline: "none" }} 
+                            style={{ width: 60, marginLeft: 8, background: "var(--glass-20)", color: "white", border: "1px solid white", borderRadius: 4, padding: "2px 6px", fontSize: 12, outline: "none" }} 
                           />
                         ) : (
-                          <span onClick={() => setIsEditingGoal(true)} style={{ cursor: "pointer", borderBottom: "1px dashed rgba(255,255,255,0.5)", marginLeft: 4 }}>
+                          <span onClick={() => setIsEditingGoal(true)} style={{ cursor: "pointer", borderBottom: "1px dashed var(--glass-50)", marginLeft: 4 }}>
                             {formatMoney(goal)} ✏️
                           </span>
                         )}
                       </span>
                       <span>{Math.round(progress)}%</span>
                     </div>
-                    <div style={{ height: 6, background: "rgba(0,0,0,0.1)", borderRadius: 3, overflow: "hidden" }}>
+                    <div style={{ height: 6, background: "var(--black-10)", borderRadius: 3, overflow: "hidden" }}>
                       <div style={{ height: "100%", width: `${progress}%`, background: "var(--blue)", borderRadius: 3 }} />
                     </div>
                   </div>
@@ -141,7 +141,7 @@ export function DriverView({
                     <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>Entregas</div>
                   </div>
                 </div>
-                <div style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(12px)", padding: 16, borderRadius: 16, border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ background: "var(--glass-03)", backdropFilter: "blur(12px)", padding: 16, borderRadius: 16, border: "1px solid var(--glass-08)", display: "flex", flexDirection: "column", gap: 8 }}>
                   <span style={{ fontSize: 20 }}>🛣️</span>
                   <div>
                     <div style={{ fontSize: 20, fontWeight: 800, color: "var(--ink)" }}>{distanceToday.toFixed(1)} <span style={{fontSize: 14}}>km</span></div>
@@ -204,7 +204,7 @@ export function DriverView({
                         const distanciaKm = ((order.id % 5) + 1.8).toFixed(1);
 
                         return (
-                          <div key={order.id} style={{ background: "var(--panel)", borderRadius: 16, border: isEnRoute ? "2px solid var(--green)" : "1px solid var(--line)", overflow: "hidden", position: "relative", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+                          <div key={order.id} style={{ background: "var(--panel)", borderRadius: 16, border: isEnRoute ? "2px solid var(--green)" : "1px solid var(--line)", overflow: "hidden", position: "relative", boxShadow: "0 4px 12px var(--black-05)" }}>
                             
                             {/* Card Header */}
                             <div style={{ background: isEnRoute ? "var(--green-soft)" : "var(--surface)", padding: "12px 16px", borderBottom: "1px solid var(--line)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>

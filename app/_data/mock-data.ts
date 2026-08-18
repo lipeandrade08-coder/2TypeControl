@@ -9,7 +9,8 @@ export const navigation: NavItem[] = [
   { label: "Entregas", icon: "entregas" },
   { label: "Relatórios", icon: "relatorios" },
   { label: "CRM", icon: "crm" },
-  { label: "Integrações", icon: "integracoes", group: "CONFIGURAÇÕES" },
+  { label: "Integrações", icon: "integracoes" },
+  { label: "Configurações", icon: "configuracoes", group: "CONFIGURAÇÃO" },
 ];
 
 export const initialOrders: Order[] = [

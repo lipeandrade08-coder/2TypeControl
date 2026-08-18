@@ -71,8 +71,8 @@ export function WaiterView({
   const cartTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   return (
-    <div className="waiter-backdrop" style={{ background: "var(--background)" }}>
-      <div className="waiter-frame" style={{ background: "var(--background)", display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
+    <div className="waiter-backdrop force-dark" style={{ background: "var(--canvas)" }}>
+      <div className="waiter-frame" style={{ background: "var(--canvas)", display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
       {/* HEADER */}
       <div style={{ padding: "20px 20px 16px", background: "var(--panel)", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 10 }}>
         {selectedTable ? (
@@ -118,7 +118,7 @@ export function WaiterView({
                 >
                   <div style={{ fontSize: 36, fontWeight: 800, lineHeight: 1 }}>{String(t.number).padStart(2, "0")}</div>
                   <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.8, textTransform: "uppercase", letterSpacing: 0.5 }}>{t.status}</div>
-                  {isOccupied && <div style={{ fontSize: 14, fontWeight: 700, marginTop: 4, background: "rgba(255,255,255,0.2)", padding: "4px 12px", borderRadius: 20 }}>{formatMoney(t.total)}</div>}
+                  {isOccupied && <div style={{ fontSize: 14, fontWeight: 700, marginTop: 4, background: "var(--glass-20)", padding: "4px 12px", borderRadius: 20 }}>{formatMoney(t.total)}</div>}
                 </button>
               );
             })}
@@ -129,13 +129,13 @@ export function WaiterView({
             <div style={{ display: "flex", background: "var(--surface)", borderRadius: 12, padding: 4, marginBottom: 20 }}>
               <button 
                 onClick={() => setActiveTab("cardapio")}
-                style={{ flex: 1, padding: "12px", borderRadius: 8, border: 0, fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s", background: activeTab === "cardapio" ? "var(--panel)" : "transparent", color: activeTab === "cardapio" ? "var(--blue)" : "var(--muted)", boxShadow: activeTab === "cardapio" ? "0 2px 8px rgba(0,0,0,0.05)" : "none" }}
+                style={{ flex: 1, padding: "12px", borderRadius: 8, border: 0, fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s", background: activeTab === "cardapio" ? "var(--panel)" : "transparent", color: activeTab === "cardapio" ? "var(--blue)" : "var(--muted)", boxShadow: activeTab === "cardapio" ? "0 2px 8px var(--black-05)" : "none" }}
               >
                 Cardápio
               </button>
               <button 
                 onClick={() => setActiveTab("conta")}
-                style={{ flex: 1, padding: "12px", borderRadius: 8, border: 0, fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s", background: activeTab === "conta" ? "var(--panel)" : "transparent", color: activeTab === "conta" ? "var(--ink)" : "var(--muted)", boxShadow: activeTab === "conta" ? "0 2px 8px rgba(0,0,0,0.05)" : "none" }}
+                style={{ flex: 1, padding: "12px", borderRadius: 8, border: 0, fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s", background: activeTab === "conta" ? "var(--panel)" : "transparent", color: activeTab === "conta" ? "var(--ink)" : "var(--muted)", boxShadow: activeTab === "conta" ? "0 2px 8px var(--black-05)" : "none" }}
               >
                 Conta Parcial
               </button>
@@ -220,7 +220,7 @@ export function WaiterView({
             style={{ width: "100%", background: "var(--blue)", color: "white", padding: 20, borderRadius: 16, border: 0, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", boxShadow: "0 10px 40px rgba(59,130,246,0.5)" }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ background: "rgba(255,255,255,0.2)", width: 36, height: 36, borderRadius: 18, display: "grid", placeItems: "center", fontWeight: 800, fontSize: 16 }}>{cart.reduce((a,c) => a + c.quantity, 0)}</div>
+              <div style={{ background: "var(--glass-20)", width: 36, height: 36, borderRadius: 18, display: "grid", placeItems: "center", fontWeight: 800, fontSize: 16 }}>{cart.reduce((a,c) => a + c.quantity, 0)}</div>
               <span style={{ fontSize: 16, fontWeight: 700 }}>Ver Pedido</span>
             </div>
             <strong style={{ fontSize: 18 }}>{formatMoney(cartTotal)}</strong>
@@ -230,7 +230,7 @@ export function WaiterView({
 
       {/* CART MODAL (BOTTOM SHEET) */}
       {showCart && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+        <div style={{ position: "fixed", inset: 0, background: "var(--black-60)", zIndex: 200, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
           <div style={{ background: "var(--panel)", borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40, maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h3 style={{ margin: 0, color: "var(--ink)", fontSize: 20, fontWeight: 800 }}>Resumo do Pedido</h3>
@@ -271,7 +271,7 @@ export function WaiterView({
 
       {/* CONFIGURING ITEM MODAL (BOTTOM SHEET) */}
       {configuringItem && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 300, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+        <div style={{ position: "fixed", inset: 0, background: "var(--black-60)", zIndex: 300, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
           <div style={{ background: "var(--panel)", borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40, borderTop: "1px solid var(--line)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <h3 style={{ margin: 0, color: "var(--ink)", fontSize: 22, fontWeight: 800 }}>{configuringItem.item.name}</h3>
